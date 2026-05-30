@@ -71,7 +71,7 @@ header{height:58px;background:rgba(15,15,26,.97);border-bottom:1px solid var(--b
 .dz-hint{font-size:10.5px;color:var(--mut);line-height:1.5;}
 .dz-hint b{color:var(--gold2);}
 
-/* FIELD PANEL – draggable text items */
+/* FIELD PANEL */
 .field-item{background:var(--s2);border:1px solid var(--b2);border-radius:8px;
   padding:10px 12px;margin-bottom:8px;}
 .field-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
@@ -128,16 +128,60 @@ header{height:58px;background:rgba(15,15,26,.97);border-bottom:1px solid var(--b
   padding:28px;background:var(--bg);scroll-behavior:smooth;}
 .canvas-outer{position:relative;box-shadow:0 12px 50px rgba(0,0,0,.6);transform-origin:top left;margin:auto;}
 #certCanvas{display:block;border-radius:4px;}
-/* Drag handles */
-.dh{position:absolute;display:flex;align-items:center;justify-content:center;
+
+/* ── DRAG HANDLES ── */
+.dh{
+  position:absolute;display:flex;flex-direction:column;align-items:center;
   cursor:move;user-select:none;white-space:nowrap;pointer-events:auto;
-  transform:translateX(-50%);transition:outline .1s;}
-.dh:hover{outline:2px dashed rgba(255,255,255,.5);outline-offset:4px;border-radius:4px;}
-.dh.dragging{outline:2px solid var(--gold);outline-offset:4px;border-radius:4px;z-index:99;}
-.dh-grip{position:absolute;top:-18px;left:50%;transform:translateX(-50%);
-  background:var(--gold);color:#000;font-size:9px;font-weight:700;
-  padding:1px 6px;border-radius:3px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none;}
-.dh:hover .dh-grip,.dh.dragging .dh-grip{opacity:1;}
+  transform:translateX(-50%);transition:opacity .18s;
+}
+
+/* Gold grip label – always visible, draggable */
+.dh-grip{
+  display:flex;align-items:center;gap:5px;
+  background:var(--gold);color:#000;font-size:9.5px;font-weight:700;
+  padding:2px 8px 2px 6px;border-radius:4px;margin-bottom:3px;
+  cursor:move;white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+  transition:background .15s, box-shadow .15s;
+}
+.dh-grip:hover{ background:var(--gold2); box-shadow:0 3px 12px rgba(0,0,0,.45); }
+.dh-grip-icon{ font-size:9px; opacity:.7; }
+
+/* Close (×) button inside grip */
+.dh-grip-close{
+  width:13px;height:13px;border-radius:50%;background:rgba(0,0,0,.18);
+  border:none;color:#000;font-size:9px;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s,color .12s;
+  flex-shrink:0;
+}
+.dh-grip-close:hover{ background:var(--red);color:#fff; }
+
+/* Field text */
+.dh-text{
+  font-family:'Arial',sans-serif;white-space:nowrap;pointer-events:none;
+}
+
+/* States */
+.dh.dragging .dh-grip{ background:var(--gold2); box-shadow:0 4px 16px rgba(212,168,67,.5); }
+.dh.will-remove .dh-grip{ background:var(--red);color:#fff; }
+.dh.will-remove .dh-text{ opacity:.35; }
+.dh.will-remove{ outline:2px dashed var(--red);outline-offset:4px;border-radius:4px; }
+
+/* Drop-zone hint overlay shown on canvas while dragging outside */
+.drop-hint{
+  display:none;position:absolute;inset:0;
+  border:3px dashed var(--red);border-radius:4px;
+  background:rgba(224,85,85,.07);
+  pointer-events:none;z-index:50;
+  align-items:center;justify-content:center;
+}
+.drop-hint.show{ display:flex; }
+.drop-hint-lbl{
+  background:var(--red);color:#fff;border-radius:6px;
+  padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.05em;
+}
 
 /* RIGHT PANEL */
 .rpanel{width:280px;flex-shrink:0;border-left:1px solid var(--b1);
@@ -161,8 +205,6 @@ td:first-child{text-align:center;}
 .chk{width:14px;height:14px;cursor:pointer;accent-color:var(--gold);}
 .nm{font-weight:600;}
 .dm{color:var(--mut);font-size:11px;}
-.chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.06em;}
-.chip-ok{background:rgba(76,175,125,.1);color:var(--grn);border:1px solid rgba(76,175,125,.2);}
 
 /* OVERLAY */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
@@ -188,7 +230,6 @@ td:first-child{text-align:center;}
 .toast.err{border-left:3px solid var(--red);}
 .toast.inf{border-left:3px solid var(--gold);}
 
-/* empty */
 .empty-rp{text-align:center;padding:40px 16px;color:var(--soft);}
 .empty-rp .ei{font-size:32px;margin-bottom:10px;}
 .empty-rp p{font-size:11.5px;line-height:1.6;}
@@ -236,7 +277,6 @@ td:first-child{text-align:center;}
         </div>
         <div id="tplStatus"></div>
       </div>
-
       <div class="sec">
         <div class="sec-title">Student Excel</div>
         <div class="dz" id="xlsZone">
@@ -255,7 +295,6 @@ td:first-child{text-align:center;}
         </div>
         <div id="xlsStatus"></div>
       </div>
-
       <button class="btn btn-ghost btn-sm btn-full" onclick="dlSample()">⬇ Sample Excel</button>
     </div>
 
@@ -263,12 +302,11 @@ td:first-child{text-align:center;}
     <div class="lpanel-body" id="lt-fields" style="display:none">
       <div style="font-size:11px;color:var(--mut);background:var(--s3);border-radius:7px;
         padding:10px;margin-bottom:14px;line-height:1.7;border:1px solid var(--b2);">
-        🖱️ <b style="color:var(--gold)">Drag</b> the text labels directly on the certificate preview to position them.<br>
-        Use controls below to adjust size, color and style.
+        🖱️ <b style="color:var(--gold)">Drag</b> the gold label or text on the canvas to position.<br>
+        <b style="color:var(--red)">Drag outside</b> the canvas to remove a field.<br>
+        Click <b style="color:var(--gold)">×</b> on the label to remove instantly.
       </div>
-      <div id="fieldsPanel">
-        <!-- generated by JS -->
-      </div>
+      <div id="fieldsPanel"></div>
     </div>
 
     <!-- TAB: STUDENTS -->
@@ -325,7 +363,6 @@ td:first-child{text-align:center;}
       </div>
     </div>
   </div>
-
 </div>
 
 <!-- Progress -->
@@ -352,7 +389,6 @@ let uid         = 0;
 let scale       = 1;
 let canvasW     = 0, canvasH = 0;
 
-/* Fields config – each field is draggable & configurable */
 const FIELDS = {
   titleName: {
     id:'titleName', label:'Title (Student Name)', sample:'NUJUMA NAZAR',
@@ -391,23 +427,19 @@ const FIELDS = {
   },
 };
 
-/* Helper: Get today's date formatted as DD-MM-YYYY */
-function getTodayDateStr() {
-  const d = new Date();
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}-${month}-${year}`;
+function getTodayDateStr(){
+  const d=new Date();
+  return [String(d.getDate()).padStart(2,'0'),String(d.getMonth()+1).padStart(2,'0'),d.getFullYear()].join('-');
 }
 
 /* ══════════════════════════════════════════════
-   LEFT PANEL TABS
+   TABS
 ══════════════════════════════════════════════ */
-function lswitch(id, btn){
+function lswitch(id,btn){
   document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('on'));
   btn.classList.add('on');
   ['lt-upload','lt-fields','lt-students'].forEach(t=>{
-    document.getElementById(t).style.display = (t==='lt-'+id)?'block':'none';
+    document.getElementById(t).style.display=(t==='lt-'+id)?'block':'none';
   });
 }
 
@@ -417,11 +449,10 @@ function lswitch(id, btn){
 function loadTemplate(e){
   const file=e.target.files[0]; if(!file) return;
   if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){
-    toast('Converting PDF…','inf');
-    loadPdfAsImg(file);
+    toast('Converting PDF…','inf'); loadPdfAsImg(file);
   } else {
     const r=new FileReader();
-    r.onload=ev=>setTemplate(ev.target.result, file.name);
+    r.onload=ev=>setTemplate(ev.target.result,file.name);
     r.readAsDataURL(file);
   }
 }
@@ -439,7 +470,7 @@ async function loadPdfAsImg(file){
     const cv=document.createElement('canvas');
     cv.width=vp.width; cv.height=vp.height;
     await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-    setTemplate(cv.toDataURL('image/jpeg',0.95), file.name);
+    setTemplate(cv.toDataURL('image/jpeg',0.95),file.name);
   }catch(err){toast('PDF error: '+err.message,'err');}
 }
 
@@ -447,14 +478,13 @@ function loadScript(src){
   return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
 }
 
-function setTemplate(url, name){
+function setTemplate(url,name){
   templateURL=url;
   templateImg=new Image();
   templateImg.onload=()=>{
     canvasW=templateImg.naturalWidth;
     canvasH=templateImg.naturalHeight;
-    document.getElementById('tplStatus').innerHTML=
-      `<div class="fpill">✅ ${esc(name)}</div>`;
+    document.getElementById('tplStatus').innerHTML=`<div class="fpill">✅ ${esc(name)}</div>`;
     document.getElementById('tplZone').classList.add('loaded');
     buildCanvas();
     buildFieldsPanel();
@@ -466,7 +496,7 @@ function setTemplate(url, name){
 }
 
 /* ══════════════════════════════════════════════
-   CANVAS + DRAG HANDLES
+   CANVAS
 ══════════════════════════════════════════════ */
 let outerEl=null;
 
@@ -477,74 +507,146 @@ function buildCanvas(){
   outerEl=document.createElement('div');
   outerEl.className='canvas-outer';
   outerEl.id='canvasOuter';
-  outerEl.style.cssText=`width:${canvasW}px;height:${canvasH}px;transform-origin:top left;`;
+  outerEl.style.cssText=`width:${canvasW}px;height:${canvasH}px;transform-origin:top left;position:relative;`;
 
   const cv=document.createElement('canvas');
   cv.id='certCanvas';
   cv.width=canvasW; cv.height=canvasH;
   outerEl.appendChild(cv);
 
-  // Draw template
+  // Red drop-zone hint overlay (shown when dragging outside)
+  const hint=document.createElement('div');
+  hint.className='drop-hint';
+  hint.id='dropHint';
+  hint.innerHTML='<div class="drop-hint-lbl">🗑 Release to Remove</div>';
+  outerEl.appendChild(hint);
+
   const ctx=cv.getContext('2d');
   ctx.drawImage(templateImg,0,0,canvasW,canvasH);
 
-  // Create drag handles for each enabled field
-  Object.values(FIELDS).forEach(f=>{
-    if(f.enabled) createHandle(f);
-  });
+  Object.values(FIELDS).forEach(f=>{ if(f.enabled) createHandle(f); });
 
   wrap.appendChild(outerEl);
   applyZoom();
 }
 
+/* ══════════════════════════════════════════════
+   DRAG HANDLE CREATION
+   – The entire .dh div is draggable
+   – Clicking × on the gold grip removes the field
+   – Dragging outside canvas removes the field
+══════════════════════════════════════════════ */
 function createHandle(f){
   if(!outerEl) return;
-  let old=document.getElementById('dh-'+f.id);
+  const old=document.getElementById('dh-'+f.id);
   if(old) old.remove();
 
+  /* wrapper */
   const el=document.createElement('div');
   el.className='dh';
   el.id='dh-'+f.id;
 
+  /* ── gold grip label (draggable, contains field name + × button) ── */
   const grip=document.createElement('div');
   grip.className='dh-grip';
-  grip.textContent=f.label;
+
+  const gripIcon=document.createElement('span');
+  gripIcon.className='dh-grip-icon';
+  gripIcon.textContent='⠿'; // drag icon
+  grip.appendChild(gripIcon);
+
+  const gripLbl=document.createElement('span');
+  gripLbl.textContent=f.label;
+  grip.appendChild(gripLbl);
+
+  const closeBtn=document.createElement('button');
+  closeBtn.className='dh-grip-close';
+  closeBtn.textContent='×';
+  closeBtn.title='Remove field';
+  closeBtn.addEventListener('mousedown',e=>e.stopPropagation());
+  closeBtn.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+  closeBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    removeField(f.id);
+  });
+  grip.appendChild(closeBtn);
   el.appendChild(grip);
 
+  /* ── sample text ── */
   const txt=document.createElement('span');
+  txt.className='dh-text';
   txt.id='dhtxt-'+f.id;
   el.appendChild(txt);
 
-  positionHandle(el, f);
-  styleHandle(el, f);
+  positionHandle(el,f);
+  styleHandle(el,f);
 
-  // DRAG
-  let dragging=false, startX, startY, startXPct, startYPct;
-  el.addEventListener('mousedown',e=>{
-    e.preventDefault();
-    dragging=true;
-    el.classList.add('dragging');
-    startX=e.clientX; startY=e.clientY;
+  /* ── UNIFIED DRAG HANDLER ── */
+  attachDrag(el,f);
+
+  outerEl.appendChild(el);
+}
+
+/* ── Core drag logic shared by mouse & touch ── */
+function attachDrag(el, f){
+  let startClientX, startClientY, startXPct, startYPct;
+
+  function beginDrag(clientX, clientY){
+    startClientX=clientX; startClientY=clientY;
     startXPct=f.xPct; startYPct=f.yPct;
-    const curScale=getCurrentScale();
+    el.classList.add('dragging');
+  }
 
-    const onMove=e=>{
-      if(!dragging) return;
-      const dx=(e.clientX-startX)/curScale;
-      const dy=(e.clientY-startY)/curScale;
-      f.xPct=Math.min(95,Math.max(5, startXPct + dx/canvasW*100));
-      f.yPct=Math.min(98,Math.max(2, startYPct + dy/canvasH*100));
-      positionHandle(el, f);
-      // sync slider
-      const sy=document.getElementById('sl-y-'+f.id);
-      const sx=document.getElementById('sl-x-'+f.id);
-      if(sy) sy.value=f.yPct.toFixed(1);
-      if(sx) sx.value=f.xPct.toFixed(1);
-      updateSliderVals(f);
-    };
+  function moveDrag(clientX, clientY){
+    const curScale=getCurrentScale();
+    const dx=(clientX-startClientX)/curScale;
+    const dy=(clientY-startClientY)/curScale;
+    const newX=startXPct + dx/canvasW*100;
+    const newY=startYPct + dy/canvasH*100;
+
+    f.xPct=newX;
+    f.yPct=newY;
+    positionHandle(el,f);
+
+    // Sync sliders
+    const slY=document.getElementById('sl-y-'+f.id);
+    const slX=document.getElementById('sl-x-'+f.id);
+    if(slY) slY.value=Math.min(99,Math.max(1,newY)).toFixed(1);
+    if(slX) slX.value=Math.min(99,Math.max(1,newX)).toFixed(1);
+    updateSliderVals(f);
+
+    // Outside canvas? → show remove state
+    const outside=(newX<-2||newX>102||newY<-2||newY>102);
+    el.classList.toggle('will-remove', outside);
+    const hint=document.getElementById('dropHint');
+    if(hint) hint.classList.toggle('show', outside);
+  }
+
+  function endDrag(){
+    el.classList.remove('dragging','will-remove');
+    const hint=document.getElementById('dropHint');
+    if(hint) hint.classList.remove('show');
+
+    // Dragged outside → remove
+    if(f.xPct<-2||f.xPct>102||f.yPct<-2||f.yPct>102){
+      removeField(f.id);
+      return;
+    }
+    // Snap back to safe bounds
+    f.xPct=Math.min(95,Math.max(5,f.xPct));
+    f.yPct=Math.min(97,Math.max(3,f.yPct));
+    positionHandle(el,f);
+    updateSliderVals(f);
+  }
+
+  /* Mouse */
+  el.addEventListener('mousedown',e=>{
+    if(e.target===document.querySelector('#dh-'+f.id+' .dh-grip-close')) return;
+    e.preventDefault();
+    beginDrag(e.clientX,e.clientY);
+    const onMove=e=>moveDrag(e.clientX,e.clientY);
     const onUp=()=>{
-      dragging=false;
-      el.classList.remove('dragging');
+      endDrag();
       window.removeEventListener('mousemove',onMove);
       window.removeEventListener('mouseup',onUp);
     };
@@ -552,40 +654,50 @@ function createHandle(f){
     window.addEventListener('mouseup',onUp);
   });
 
-  // Touch drag
+  /* Touch */
   el.addEventListener('touchstart',e=>{
+    if(e.target===document.querySelector('#dh-'+f.id+' .dh-grip-close')) return;
     e.preventDefault();
     const t=e.touches[0];
-    startX=t.clientX; startY=t.clientY;
-    startXPct=f.xPct; startYPct=f.yPct;
-    const curScale=getCurrentScale();
-    const onMove=e=>{
-      const t=e.touches[0];
-      const dx=(t.clientX-startX)/curScale;
-      const dy=(t.clientY-startY)/curScale;
-      f.xPct=Math.min(95,Math.max(5, startXPct + dx/canvasW*100));
-      f.yPct=Math.min(98,Math.max(2, startYPct + dy/canvasH*100));
-      positionHandle(el, f);
-      updateSliderVals(f);
-    };
+    beginDrag(t.clientX,t.clientY);
+    const onMove=e=>{const t=e.touches[0];moveDrag(t.clientX,t.clientY);};
     const onUp=()=>{
+      endDrag();
       el.removeEventListener('touchmove',onMove);
       el.removeEventListener('touchend',onUp);
     };
     el.addEventListener('touchmove',onMove,{passive:false});
     el.addEventListener('touchend',onUp);
   },{passive:false});
-
-  outerEl.appendChild(el);
 }
 
-function positionHandle(el, f){
+/* Removes field and syncs sidebar toggle */
+function removeField(id){
+  const f=FIELDS[id];
+  if(!f) return;
+  f.enabled=false;
+
+  // Hide handle
+  const h=document.getElementById('dh-'+id);
+  if(h){ h.style.transition='opacity .25s'; h.style.opacity='0'; setTimeout(()=>h.remove(),260); }
+
+  // Sync sidebar toggle
+  const btn=document.getElementById('ft-'+id);
+  const ctrl=document.getElementById('fc-'+id);
+  if(btn) btn.classList.remove('on');
+  if(ctrl) ctrl.style.cssText='opacity:.35;pointer-events:none';
+
+  toast(`"${f.label}" removed · Toggle back from Fields tab`,'inf');
+}
+
+function positionHandle(el,f){
   el.style.left=(f.xPct/100*canvasW)+'px';
   el.style.top=(f.yPct/100*canvasH)+'px';
 }
 
-function styleHandle(el, f){
-  const txt=el.querySelector('span');
+function styleHandle(el,f){
+  const txt=el.querySelector('.dh-text');
+  if(!txt) return;
   txt.textContent=f.sample;
   txt.style.cssText=`
     font-size:${f.size}px;
@@ -597,28 +709,26 @@ function styleHandle(el, f){
     text-align:${f.align};
     white-space:nowrap;
   `;
-  el.style.transform=`translateX(${f.align==='center'?'-50%':f.align==='right'?'-100%':'0'})`;
+  // Adjust wrapper alignment transform
+  const shift=f.align==='center'?'-50%':f.align==='right'?'-100%':'0';
+  el.style.transform=`translateX(${shift})`;
 }
 
 function getCurrentScale(){
-  return parseFloat(document.getElementById('canvasOuter')?.style.transform?.match(/scale\((.+)\)/)?.[1] || 1);
+  return parseFloat(document.getElementById('canvasOuter')?.style.transform?.match(/scale\((.+)\)/)?.[1]||1);
 }
 
 /* ══════════════════════════════════════════════
    ZOOM
 ══════════════════════════════════════════════ */
-function zoom(delta){
-  scale=Math.min(3,Math.max(0.1, scale+delta));
-  applyZoom();
-}
+function zoom(delta){ scale=Math.min(3,Math.max(0.1,scale+delta)); applyZoom(); }
 function resetZoom(){ scale=1; applyZoom(); }
 function fitZoom(){
   const wrap=document.getElementById('canvasWrap');
-  if(!wrap || !canvasW || !canvasH) return;
+  if(!wrap||!canvasW||!canvasH) return;
   const pw=wrap.clientWidth-80, ph=wrap.clientHeight-80;
-  if(pw<=0 || ph<=0) return;
-  const sx=pw/canvasW, sy=ph/canvasH;
-  scale=Math.min(sx,sy);
+  if(pw<=0||ph<=0) return;
+  scale=Math.min(pw/canvasW, ph/canvasH);
   applyZoom();
 }
 function applyZoom(){
@@ -629,13 +739,13 @@ function applyZoom(){
 }
 
 /* ══════════════════════════════════════════════
-   FIELDS PANEL
+   FIELDS PANEL (sidebar)
 ══════════════════════════════════════════════ */
 function buildFieldsPanel(){
-  const container=document.getElementById('fieldsPanel');
-  container.innerHTML='';
+  const c=document.getElementById('fieldsPanel');
+  c.innerHTML='';
   Object.values(FIELDS).forEach(f=>{
-    container.innerHTML+=`
+    c.innerHTML+=`
     <div class="field-item" id="fi-${f.id}">
       <div class="field-hd">
         <div class="field-dot" style="background:${f.dot}"></div>
@@ -688,25 +798,20 @@ function buildFieldsPanel(){
   });
 }
 
-function fieldChange(id, prop, val){
+function fieldChange(id,prop,val){
   FIELDS[id][prop]=val;
-  // Update the rval label
   if(prop==='yPct') document.getElementById('rv-y-'+id).textContent=val.toFixed(1)+'%';
   if(prop==='xPct') document.getElementById('rv-x-'+id).textContent=val.toFixed(1)+'%';
   if(prop==='size') document.getElementById('rv-fs-'+id).textContent=val+'px';
-  // Restyle handle
   const el=document.getElementById('dh-'+id);
-  if(el){
-    positionHandle(el, FIELDS[id]);
-    styleHandle(el, FIELDS[id]);
-  }
+  if(el){ positionHandle(el,FIELDS[id]); styleHandle(el,FIELDS[id]); }
 }
 
-function fieldStyleChange(id, val){
-  FIELDS[id].bold   = val.includes('bold');
-  FIELDS[id].italic = val.includes('italic');
+function fieldStyleChange(id,val){
+  FIELDS[id].bold=val.includes('bold');
+  FIELDS[id].italic=val.includes('italic');
   const el=document.getElementById('dh-'+id);
-  if(el) styleHandle(el, FIELDS[id]);
+  if(el) styleHandle(el,FIELDS[id]);
 }
 
 function toggleField(id){
@@ -716,24 +821,29 @@ function toggleField(id){
   const ctrl=document.getElementById('fc-'+id);
   btn.classList.toggle('on',f.enabled);
   ctrl.style.cssText=f.enabled?'':'opacity:.35;pointer-events:none';
-  // show/hide handle
-  const h=document.getElementById('dh-'+id);
-  if(h) h.style.display=f.enabled?'flex':'none';
+  if(f.enabled){
+    createHandle(f);
+  } else {
+    const h=document.getElementById('dh-'+id);
+    if(h) h.remove();
+  }
 }
 
 function updateSliderVals(f){
-  const sy=document.getElementById('rv-y-'+f.id);
-  const sx=document.getElementById('rv-x-'+f.id);
-  if(sy) sy.textContent=f.yPct.toFixed(1)+'%';
-  if(sx) sx.textContent=f.xPct.toFixed(1)+'%';
+  const ry=document.getElementById('rv-y-'+f.id);
+  const rx=document.getElementById('rv-x-'+f.id);
+  const safeY=Math.min(99,Math.max(1,f.yPct));
+  const safeX=Math.min(99,Math.max(1,f.xPct));
+  if(ry) ry.textContent=safeY.toFixed(1)+'%';
+  if(rx) rx.textContent=safeX.toFixed(1)+'%';
   const sly=document.getElementById('sl-y-'+f.id);
   const slx=document.getElementById('sl-x-'+f.id);
-  if(sly) sly.value=f.yPct.toFixed(1);
-  if(slx) slx.value=f.xPct.toFixed(1);
+  if(sly) sly.value=safeY.toFixed(1);
+  if(slx) slx.value=safeX.toFixed(1);
 }
 
 /* ══════════════════════════════════════════════
-   EXCEL
+   EXCEL PARSING
 ══════════════════════════════════════════════ */
 function norm(s){ return String(s||'').toLowerCase().replace(/[\s_\-]/g,''); }
 const CMAP={
@@ -770,21 +880,19 @@ function loadExcel(e){
           ⚠️ Missing columns:<br><b>${miss.join(', ')}</b></div>`;
         return;
       }
-      students=[]; let sk=0;
+      students=[];
       for(let i=1;i<rows.length;i++){
         const row=rows[i];
         const name=String(row[sn]||'').trim();
-        if(!name){sk++;continue;}
-        const calculatedCertNo = cno>=0 && row[cno] ? String(row[cno]).trim() : `CG-2026-${String(uid + 1).padStart(4, '0')}`;
-        const calculatedCurrentDate = cd>=0 && row[cd] ? String(row[cd]).trim() : getTodayDateStr();
+        if(!name) continue;
         uid++;
         students.push({
-          id:uid,name,
+          id:uid, name,
           course:String(row[cn]||'').trim(),
           start:String(row[sd]||'').trim(),
           end:String(row[ed]||'').trim(),
-          certNo:calculatedCertNo,
-          currentDate:calculatedCurrentDate,
+          certNo:cno>=0&&row[cno]?String(row[cno]).trim():`CG-${new Date().getFullYear()}-${String(uid).padStart(4,'0')}`,
+          currentDate:cd>=0&&row[cd]?String(row[cd]).trim():getTodayDateStr(),
           sel:false
         });
       }
@@ -800,39 +908,29 @@ function loadExcel(e){
 }
 
 /* ══════════════════════════════════════════════
-   STUDENT LIST (left + right panels)
+   STUDENT LIST
 ══════════════════════════════════════════════ */
 function renderStudents(){
-    const allSelected =
-    students.length &&
-    students.every(s => s.sel);
+  const allSel=students.length&&students.every(s=>s.sel);
+  const chkAll=document.getElementById('chkAll');
+  if(chkAll) chkAll.checked=allSel;
 
-const chkAll = document.getElementById("chkAll");
-
-if(chkAll){
-    chkAll.checked = allSelected;
-}
   const sel=students.filter(s=>s.sel).length;
   document.getElementById('countBadge').innerHTML=
     `<strong style="color:var(--gold)">${students.length}</strong> students · <strong style="color:var(--gold)">${sel}</strong> selected`;
   document.getElementById('stuStatus').innerHTML=
     `<strong style="color:var(--gold)">${students.length}</strong> students · <strong style="color:var(--gold)">${sel}</strong> selected`;
 
-  // Right panel table
   if(students.length===0){
     document.getElementById('rpStudents').innerHTML=
       `<div class="empty-rp"><div class="ei">👥</div><p>No students loaded.</p></div>`;
-    setDlEnabled(false);
-    return;
+    setDlEnabled(false); return;
   }
 
-  const rows=students.map((st,i)=>`
+  const rows=students.map(st=>`
     <tr id="tr${st.id}" class="${st.sel?'sel':''}" onclick="toggleStu(${st.id})">
-      <td><input type="checkbox"
-class="chk"
-${st.sel?'checked':''}
-onclick="event.stopPropagation()"
-onchange="chkStu(${st.id},this)"></td>
+      <td><input type="checkbox" class="chk" ${st.sel?'checked':''}
+        onclick="event.stopPropagation()" onchange="chkStu(${st.id},this)"></td>
       <td class="nm">${esc(st.name)}<br><span style="font-size:10px;color:var(--mut);font-weight:400;">${esc(st.certNo)}</span></td>
       <td class="dm">${esc(st.course)}</td>
     </tr>`).join('');
@@ -842,11 +940,9 @@ onchange="chkStu(${st.id},this)"></td>
       <thead><tr>
         <th><input type="checkbox" class="chk" id="chkAll" onchange="toggleAllChk(this)"></th>
         <th>Name &amp; Cert No</th><th>Course</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
+      </tr></thead><tbody>${rows}</tbody>
     </table></div>`;
 
-  // Left panel mini list
   const miniRows=students.map(st=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1);">
       <input type="checkbox" class="chk" ${st.sel?'checked':''} onchange="chkStu(${st.id},this)">
@@ -857,9 +953,7 @@ onchange="chkStu(${st.id},this)"></td>
     </div>`).join('');
   document.getElementById('stuList').innerHTML=miniRows;
 
- setDlEnabled(
-    students.some(s => s.sel)
-);
+  setDlEnabled(students.some(s=>s.sel));
 }
 
 function toggleStu(id){const s=students.find(s=>s.id===id);if(s){s.sel=!s.sel;renderStudents();}}
@@ -882,13 +976,10 @@ async function generate(){
   if(!sel.length){toast('Select at least one student','err');return;}
 
   showOverlay(0,sel.length,'Initializing…');
-
   try{
     const {jsPDF}=window.jspdf;
     const zip=new JSZip();
     const folder=zip.folder('certificates');
-
-    // Determine orientation from image aspect
     const isPortrait=canvasH>canvasW;
     const pdfW=isPortrait?595.28:841.89;
     const pdfH=isPortrait?841.89:595.28;
@@ -897,23 +988,10 @@ async function generate(){
     for(let i=0;i<sel.length;i++){
       const st=sel[i];
       setProgress(i,sel.length,`Creating: ${st.name}`);
-
       const pdf=new jsPDF({orientation:orient,unit:'pt',format:'a4'});
-
-      // Background template
       const fmt=templateURL.startsWith('data:image/png')?'PNG':'JPEG';
-      pdf.addImage(
-    templateURL,
-    fmt,
-    0,
-    0,
-    pdfW,
-    pdfH,
-    "",
-    "FAST"
-);
+      pdf.addImage(templateURL,fmt,0,0,pdfW,pdfH,'','FAST');
 
-      // Build substituted text for each field
       const fieldValues={
         titleName:   st.name.toUpperCase(),
         studentName: st.name.toUpperCase(),
@@ -924,45 +1002,21 @@ async function generate(){
         currentDate: st.currentDate,
       };
 
-     Object.values(FIELDS).forEach(f => {
-
-    if (!f.enabled) return;
-
-    const val = fieldValues[f.id];
-    if (!val) return;
-
-    const xPt = (f.xPct / 100) * pdfW;
-    const yPt = (f.yPct / 100) * pdfH;
-
-    const [r,g,b] = hex2rgb(f.color);
-
-    pdf.setTextColor(r,g,b);
-
-    const fontStyle =
-        f.bold && f.italic
-            ? "bolditalic"
-            : f.bold
-            ? "bold"
-            : f.italic
-            ? "italic"
-            : "normal";
-
-    pdf.setFont("helvetica", fontStyle);
-
-    pdf.setFontSize(f.size * 0.75);
-
-    pdf.text(val, xPt, yPt, {
-        align: f.align
-    });
-
-});
+      Object.values(FIELDS).forEach(f=>{
+        if(!f.enabled) return;
+        const val=fieldValues[f.id];
+        if(!val) return;
+        const xPt=(f.xPct/100)*pdfW;
+        const yPt=(f.yPct/100)*pdfH;
+        const [r,g,b]=hex2rgb(f.color);
+        pdf.setTextColor(r,g,b);
+        pdf.setFont('helvetica',f.bold&&f.italic?'bolditalic':f.bold?'bold':f.italic?'italic':'normal');
+        pdf.setFontSize(f.size*0.75);
+        pdf.text(val,xPt,yPt,{align:f.align});
+      });
 
       const buf=pdf.output('arraybuffer');
-      const safe =
-    st.name
-      .trim()
-      .replace(/[<>:"/\\|?*]/g,"")
-      .replace(/\s+/g,"_");
+      const safe=st.name.trim().replace(/[<>:"/\\|?*]/g,'').replace(/\s+/g,'_');
       folder.file(`${safe}_certificate.pdf`,buf);
       await sleep(14);
     }
@@ -972,7 +1026,6 @@ async function generate(){
     const blob=await zip.generateAsync({type:'blob'},m=>{
       setProgress(sel.length,sel.length,`Zipping… ${Math.round(m.percent)}%`);
     });
-
     hideOverlay();
     dlBlob(blob,`certificates_${Date.now()}.zip`);
     toast(`✅ ${sel.length} certificate${sel.length>1?'s':''} downloaded`,'ok');
@@ -1001,18 +1054,13 @@ function dlSample(){
 }
 
 /* ══════════════════════════════════════════════
-   STEP INDICATOR
+   STEP + UTILITIES
 ══════════════════════════════════════════════ */
 function setStep(n){
   for(let i=1;i<=3;i++){
-    const p=document.getElementById('sp'+i);
-    p.className='step-pill'+(i<n?' done':i===n?' active':'');
+    document.getElementById('sp'+i).className='step-pill'+(i<n?' done':i===n?' active':'');
   }
 }
-
-/* ══════════════════════════════════════════════
-   UTILITIES
-══════════════════════════════════════════════ */
 function hex2rgb(hex){
   return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)];
 }
@@ -1023,21 +1071,6 @@ function dlBlob(blob,name){
   const a=Object.assign(document.createElement('a'),{href:url,download:name});
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
-
-// Global update fields for drag values from sliders
-function updateFieldsPanelValues(){
-  Object.values(FIELDS).forEach(f=>{
-    const sy=document.getElementById('rv-y-'+f.id);
-    const sx=document.getElementById('rv-x-'+f.id);
-    if(sy) sy.textContent=f.yPct.toFixed(1)+'%';
-    if(sx) sx.textContent=f.xPct.toFixed(1)+'%';
-    const sly=document.getElementById('sl-y-'+f.id);
-    const slx=document.getElementById('sl-x-'+f.id);
-    if(sly) sly.value=f.yPct.toFixed(1);
-    if(slx) slx.value=f.xPct.toFixed(1);
-  });
-}
-
 function showOverlay(c,t,m){document.getElementById('overlay').classList.add('show');setProgress(c,t,m);}
 function setProgress(c,t,m){
   document.getElementById('pbarFill').style.width=t?`${Math.round(c/t*100)}%`:'0%';
@@ -1055,7 +1088,7 @@ function toast(msg,type='inf'){
   tTimer=setTimeout(()=>el.classList.remove('show'),4500);
 }
 
-/* drag-drop zones */
+/* Drag-drop file zones */
 [['tplZone',ev=>loadTemplate({target:{files:[ev.dataTransfer.files[0]]}})],
  ['xlsZone',ev=>loadExcel({target:{files:[ev.dataTransfer.files[0]]}})]].forEach(([id,fn])=>{
   const z=document.getElementById(id);
