@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CertGen Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --deep:      #0d0d14;
+  --surface:   #13131f;
+  --card:      #1a1a2e;
+  --card2:     #1e1e32;
+  --border:    #2a2a45;
+  --border2:   #333355;
+  --gold:      #d4a843;
+  --gold2:     #f0c96a;
+  --gold-dim:  #8a6820;
+  --gold-glow: rgba(212,168,67,.18);
+  --text:      #e8e6f0;
+  --muted:     #7a789a;
+  --soft:      #4a4870;
+  --green:     #4caf7d;
+  --red:       #e05555;
+  --radius:    12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Outfit',sans-serif;background:var(--deep);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(212,168,67,.06) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 80% 90%,rgba(85,119,204,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:50;background:rgba(13,13,20,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--gold-dim),var(--gold));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px var(--gold-glow);}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--gold2);letter-spacing:.02em;}
+.brand-tag{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--border2);border-radius:20px;padding:3px 10px;}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 64px);position:relative;z-index:1;}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);padding:28px 22px;display:flex;flex-direction:column;gap:22px;overflow-y:auto;background:rgba(19,19,31,.85);}
+
+/* PANEL */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.panel-head{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--card2);}
+.panel-icon{width:28px;height:28px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.panel-title{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+.panel-body{padding:18px;}
+
+/* DROP ZONE */
+.drop-zone{border:2px dashed var(--border2);border-radius:10px;padding:26px 16px;text-align:center;cursor:pointer;transition:all .25s;background:var(--surface);position:relative;}
+.drop-zone input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+.drop-zone:hover,.drop-zone.over{border-color:var(--gold);background:var(--gold-glow);}
+.dz-icon{font-size:32px;margin-bottom:10px;display:block;}
+.dz-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.dz-hint{font-size:11.5px;color:var(--muted);line-height:1.6;}
+.dz-hint b{color:var(--gold);}
+
+.file-pill{display:flex;align-items:center;gap:8px;background:rgba(76,175,125,.1);border:1px solid rgba(76,175,125,.3);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--green);font-weight:500;margin-top:10px;word-break:break-all;}
+
+/* THUMB */
+.tpl-thumb{width:100%;max-height:150px;object-fit:contain;border-radius:8px;border:1px solid var(--border2);margin-top:10px;background:var(--surface);}
+
+/* COLUMN GUIDE */
+.col-guide{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
+.col-chip{background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.col-chip b{color:var(--gold2);}
+.col-chip .dot{width:6px;height:6px;background:var(--gold-dim);border-radius:50%;flex-shrink:0;}
+
+/* INFO BOX */
+.info-box{background:rgba(212,168,67,.05);border:1px solid rgba(212,168,67,.15);border-radius:8px;padding:13px 15px;font-size:12px;color:var(--muted);line-height:1.8;}
+.info-box b{color:var(--gold);}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;background:rgba(13,13,20,.5);}
+
+/* TOOLBAR */
+.toolbar{padding:16px 32px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.count-badge{font-size:13px;color:var(--muted);margin-left:auto;}
+.count-badge strong{color:var(--gold);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;letter-spacing:.02em;}
+.btn-primary{background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:#0d0d14;box-shadow:0 2px 12px rgba(212,168,67,.25);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(212,168,67,.4);filter:brightness(1.08);}
+.btn-primary:disabled{background:var(--border2);color:var(--soft);cursor:not-allowed;transform:none;box-shadow:none;filter:none;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(224,85,85,.3);font-size:12px;padding:7px 14px;}
+.btn-danger:hover{background:rgba(224,85,85,.08);border-color:var(--red);}
+.btn-sm{padding:6px 13px;font-size:12px;}
+
+/* TABLE */
+.table-area{flex:1;overflow-y:auto;padding:28px 32px;}
+.empty{text-align:center;padding:80px 20px;color:var(--soft);}
+.empty-art{width:90px;height:90px;margin:0 auto 20px;background:var(--card);border:2px dashed var(--border2);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:40px;}
+.empty h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--muted);margin-bottom:8px;}
+.empty p{font-size:13px;color:var(--soft);max-width:320px;margin:0 auto;line-height:1.6;}
+.tbl-wrap{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--card2);}
+th{padding:13px 16px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:left;}
+th:first-child{width:50px;text-align:center;}
+tbody tr{border-top:1px solid var(--border);transition:background .12s;cursor:pointer;}
+tbody tr:hover{background:rgba(212,168,67,.04);}
+tbody tr.sel{background:rgba(212,168,67,.07);}
+td{padding:12px 16px;font-size:13px;}
+td:first-child{text-align:center;}
+.chk{width:16px;height:16px;cursor:pointer;accent-color:var(--gold);}
+.name-cell{font-weight:600;color:var(--text);}
+.dim{color:var(--muted);font-size:12px;}
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.06em;}
+.chip-ok{background:rgba(76,175,125,.12);color:var(--green);border:1px solid rgba(76,175,125,.25);}
+.row-num{color:var(--soft);font-size:11px;}
+
+/* PROGRESS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:40px 48px;text-align:center;min-width:340px;box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(212,168,67,.1);}
+.modal-icon{font-size:40px;margin-bottom:14px;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold2);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:24px;min-height:20px;}
+.pbar-track{background:var(--border);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px;}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold2));border-radius:8px;width:0%;transition:width .35s ease;}
+.pbar-label{font-size:12px;color:var(--soft);}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;z-index:300;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:13px 18px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;box-shadow:0 12px 32px rgba(0,0,0,.3);transform:translateY(20px) scale(.97);opacity:0;transition:all .28s;max-width:380px;pointer-events:none;}
+.toast.show{transform:translateY(0) scale(1);opacity:1;}
+.toast.ok{border-left:3px solid var(--green);}
+.toast.err{border-left:3px solid var(--red);}
+.toast.inf{border-left:3px solid var(--gold);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">🎓</div>
+    <div class="brand-name">CertGen Studio</div>
+  </div>
+  <div class="brand-tag">Certificate Generator</div>
+</header>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+
+    <!-- Step 1: Template -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-icon">🖼️</div>
+        <div class="panel-title">Step 1 — Certificate Template</div>
+      </div>
+      <div class="panel-body">
+        <div class="drop-zone" id="tplZone">
+          <input type="file" id="tplFile" accept="image/*" onchange="loadTemplate(event)">
+          <span class="dz-icon">🗂️</span>
+          <div class="dz-title">Upload Template Image</div>
+          <div class="dz-hint">PNG or JPG used as the certificate background<br>Skip to use the built-in elegant design</div>
+        </div>
+        <div id="tplStatus"></div>
+        <img id="tplThumb" class="tpl-thumb" style="display:none" alt="template preview">
+      </div>
+    </div>
+
+    <!-- Step 2: Excel -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-icon">📊</div>
+        <div class="panel-title">Step 2 — Upload Student Excel</div>
+      </div>
+      <div class="panel-body">
+        <div class="drop-zone" id="xlsZone">
+          <input type="file" id="xlsFile" accept=".xlsx,.xls,.csv" onchange="loadExcel(event)">
+          <span class="dz-icon">📋</span>
+          <div class="dz-title">Upload Excel / CSV File</div>
+          <div class="dz-hint">Your spreadsheet must have these <b>5 columns</b>:</div>
+        </div>
+
+        <!-- Column reference -->
+        <div class="col-guide" style="margin-top:12px;">
+          <div class="col-chip"><span class="dot"></span><b>Student Name</b></div>
+          <div class="col-chip"><span class="dot"></span><b>Course Name</b></div>
+          <div class="col-chip"><span class="dot"></span><b>Title Name</b></div>
+          <div class="col-chip"><span class="dot"></span><b>Start Date</b></div>
+          <div class="col-chip"><span class="dot"></span><b>End Date</b></div>
+        </div>
+
+        <div id="xlsStatus" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- Guide -->
+    <div class="info-box">
+      💡 <b>How it works</b><br>
+      1. Upload your certificate background image<br>
+      2. Upload the Excel file with all 5 columns filled<br>
+      3. Students appear in the table on the right<br>
+      4. Tick the ones you need → <b>Download ZIP</b><br>
+      Each student gets their own PDF certificate inside the ZIP.
+    </div>
+
+    <!-- Sample download hint -->
+    <div style="text-align:center;">
+      <button class="btn btn-ghost btn-sm" onclick="downloadSample()" style="width:100%;justify-content:center;">
+        ⬇ Download Sample Excel Template
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <div class="toolbar">
+      <button class="btn btn-ghost btn-sm" onclick="selectAll()">☑ Select All</button>
+      <button class="btn btn-ghost btn-sm" onclick="deselectAll()">☐ Deselect All</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Clear List</button>
+      <div class="count-badge" id="countBadge"><strong>0</strong> students &nbsp;·&nbsp; <strong>0</strong> selected</div>
+      <button class="btn btn-primary" id="dlBtn" onclick="generate()" disabled>⬇&nbsp; Download ZIP</button>
+    </div>
+
+    <div class="table-area">
+
+      <div class="empty" id="emptyState">
+        <div class="empty-art">🎓</div>
+        <h3>No Students Loaded</h3>
+        <p>Upload your Excel file with the required 5 columns. Students will appear here for selection.</p>
+      </div>
+
+      <div class="tbl-wrap" id="tblWrap" style="display:none;">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="chk" id="chkAll" onchange="toggleAll(this)"></th>
+              <th>#</th>
+              <th>Student Name</th>
+              <th>Course Name</th>
+              <th>Title</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-icon">⚙️</div>
+    <div class="modal-title">Generating Certificates</div>
+    <div class="modal-sub" id="modalSub">Preparing…</div>
+    <div class="pbar-track"><div class="pbar-fill" id="pbarFill"></div></div>
+    <div class="pbar-label" id="pbarLabel">0 / 0</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let students = [];
+let templateURL = null;
+let uid = 0;
+
+/* ── Column name normaliser ── */
+function norm(s) {
+  return String(s || '').toLowerCase().replace(/[\s_\-]/g, '');
+}
+
+const COL_MAP = {
+  studentname:  ['studentname','name','fullname','student'],
+  coursename:   ['coursename','course','programname','program'],
+  titlename:    ['titlename','title','certtitle','certificatetitle','certificationtitle'],
+  startdate:    ['startdate','start','from','datefrom','commencedate'],
+  enddate:      ['enddate','end','to','dateto','completiondate','finishdate'],
+};
+
+function findCol(headers, key) {
+  const norms = headers.map(norm);
+  const aliases = COL_MAP[key];
+  for (const alias of aliases) {
+    const i = norms.indexOf(alias);
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+/* ── Template ── */
+function loadTemplate(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    templateURL = ev.target.result;
+    document.getElementById('tplStatus').innerHTML =
+      `<div class="file-pill">✅ ${esc(file.name)}</div>`;
+    const img = document.getElementById('tplThumb');
+    img.src = templateURL; img.style.display = 'block';
+    toast('Template loaded', 'ok');
+  };
+  r.readAsDataURL(file);
+}
+
+/* ── Excel ── */
+function loadExcel(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const wb   = XLSX.read(ev.target.result, { type: 'binary' });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'dd-mmm-yyyy' });
+      if (rows.length < 2) { toast('File is empty or has no data rows', 'err'); return; }
+
+      const headers = rows[0];
+      const snIdx = findCol(headers, 'studentname');
+      const cnIdx = findCol(headers, 'coursename');
+      const tnIdx = findCol(headers, 'titlename');
+      const sdIdx = findCol(headers, 'startdate');
+      const edIdx = findCol(headers, 'enddate');
+
+      const missing = [];
+      if (snIdx < 0) missing.push('Student Name');
+      if (cnIdx < 0) missing.push('Course Name');
+      if (tnIdx < 0) missing.push('Title Name');
+      if (sdIdx < 0) missing.push('Start Date');
+      if (edIdx < 0) missing.push('End Date');
+
+      if (missing.length) {
+        toast(`Missing columns: ${missing.join(', ')}`, 'err');
+        document.getElementById('xlsStatus').innerHTML =
+          `<div style="margin-top:10px;background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.3);border-radius:8px;padding:10px 13px;font-size:12px;color:#e05555;">
+            ⚠️ Missing columns:<br><b>${missing.join(', ')}</b>
+          </div>`;
+        return;
+      }
+
+      students = [];
+      let skipped = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const name  = String(row[snIdx] || '').trim();
+        const course = String(row[cnIdx] || '').trim();
+        const title  = String(row[tnIdx] || '').trim();
+        const start  = String(row[sdIdx] || '').trim();
+        const end    = String(row[edIdx] || '').trim();
+        if (!name) { skipped++; continue; }
+        students.push({ id: ++uid, name, course, title, start, end, sel: false });
+      }
+
+      render();
+      document.getElementById('xlsStatus').innerHTML =
+        `<div class="file-pill">✅ ${esc(file.name)} — ${students.length} students loaded${skipped ? ` (${skipped} skipped)` : ''}</div>`;
+      toast(`${students.length} students imported`, 'ok');
+    } catch(err) {
+      toast('Parse error: ' + err.message, 'err');
+      console.error(err);
+    }
+  };
+  r.readAsBinaryString(file);
+}
+
+/* ── Render ── */
+function render() {
+  document.getElementById('emptyState').style.display = students.length ? 'none' : 'block';
+  document.getElementById('tblWrap').style.display    = students.length ? 'block' : 'none';
+
+  document.getElementById('tbody').innerHTML = students.map((st, i) => `
+    <tr id="r${st.id}" class="${st.sel ? 'sel' : ''}" onclick="toggleRow(${st.id})">
+      <td><input type="checkbox" class="chk" ${st.sel ? 'checked' : ''}
+        onclick="event.stopPropagation();chkRow(${st.id},this)"></td>
+      <td class="row-num">${i + 1}</td>
+      <td class="name-cell">${esc(st.name)}</td>
+      <td class="dim">${esc(st.course)}</td>
+      <td class="dim">${esc(st.title)}</td>
+      <td class="dim">${esc(st.start)}</td>
+      <td class="dim">${esc(st.end)}</td>
+      <td><span class="chip chip-ok">Ready</span></td>
+      <td><button class="btn btn-danger btn-sm"
+        onclick="event.stopPropagation();removeRow(${st.id})">✕</button></td>
+    </tr>`).join('');
+
+  updateCounts();
+}
+
+function toggleRow(id){ const s=students.find(s=>s.id===id);if(s){s.sel=!s.sel;render();} }
+function chkRow(id,el){ const s=students.find(s=>s.id===id);if(s){s.sel=el.checked;updateCounts();} }
+function removeRow(id){ students=students.filter(s=>s.id!==id);render(); }
+function selectAll(){ students.forEach(s=>s.sel=true);render(); }
+function deselectAll(){ students.forEach(s=>s.sel=false);render(); }
+function clearAll(){ if(!students.length)return;students=[];render();toast('List cleared','inf'); }
+function toggleAll(el){ students.forEach(s=>s.sel=el.checked);render(); }
+
+function updateCounts(){
+  const sel=students.filter(s=>s.sel).length;
+  document.getElementById('countBadge').innerHTML=
+    `<strong>${students.length}</strong> students &nbsp;·&nbsp; <strong>${sel}</strong> selected`;
+  document.getElementById('dlBtn').disabled=sel===0;
+}
+
+/* ── Generate ── */
+async function generate(){
+  const sel=students.filter(s=>s.sel);
+  if(!sel.length)return;
+  showOverlay(0,sel.length,'Initializing…');
+
+  try{
+    const {jsPDF}=window.jspdf;
+    const zip=new JSZip();
+    const folder=zip.folder('certificates');
+
+    for(let i=0;i<sel.length;i++){
+      const st=sel[i];
+      setProgress(i,sel.length,`Creating: ${st.name}`);
+
+      const W=842,H=595;
+      const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[W,H]});
+
+      if(templateURL){
+        const fmt=templateURL.startsWith('data:image/png')?'PNG':'JPEG';
+        pdf.addImage(templateURL,fmt,0,0,W,H);
+      } else {
+        drawBg(pdf,W,H);
+      }
+
+      drawContent(pdf,W,H,st);
+
+      const buf=pdf.output('arraybuffer');
+      const safe=st.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ +/g,'_');
+      folder.file(`${safe}_certificate.pdf`,buf);
+      await sleep(12);
+    }
+
+    setProgress(sel.length,sel.length,'Compressing ZIP…');
+    await sleep(50);
+    const blob=await zip.generateAsync({type:'blob'},meta=>{
+      setProgress(sel.length,sel.length,`Compressing… ${Math.round(meta.percent)}%`);
+    });
+
+    hideOverlay();
+    dlBlob(blob,`certificates_${Date.now()}.zip`);
+    toast(`✅ ${sel.length} certificate${sel.length>1?'s':''} downloaded`,'ok');
+  }catch(err){
+    hideOverlay();
+    toast('Error: '+err.message,'err');
+    console.error(err);
+  }
+}
+
+/* ── PDF Background ── */
+function drawBg(pdf,W,H){
+  pdf.setFillColor(10,12,28);
+  pdf.rect(0,0,W,H,'F');
+  pdf.setDrawColor(180,140,55);
+  pdf.setLineWidth(3.5);
+  pdf.rect(18,18,W-36,H-36,'S');
+  pdf.setLineWidth(1);
+  pdf.rect(28,28,W-56,H-56,'S');
+  [[36,36],[W-36,36],[36,H-36],[W-36,H-36]].forEach(([x,y])=>{
+    pdf.setFillColor(180,140,55);
+    pdf.circle(x,y,5,'F');
+    pdf.setLineWidth(0.5);
+    pdf.circle(x,y,9,'S');
+  });
+}
+
+/* ── PDF Content (per student with their own data) ── */
+function drawContent(pdf,W,H,st){
+  const cx=W/2;
+
+  // Title
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(28);
+  pdf.setTextColor(212,168,67);
+  pdf.text(st.title||'Certificate of Completion',cx,H*0.25,{align:'center'});
+
+  // rule
+  const tW=pdf.getTextWidth(st.title||'Certificate of Completion');
+  pdf.setDrawColor(212,168,67);
+  pdf.setLineWidth(0.8);
+  pdf.line(cx-tW/2,H*0.275,cx+tW/2,H*0.275);
+
+  // "This is to certify that"
+  pdf.setFont('helvetica','normalitalic');
+  pdf.setFontSize(13);
+  pdf.setTextColor(190,175,140);
+  pdf.text('This is to certify that',cx,H*0.375,{align:'center'});
+
+  // Student name
+  pdf.setFont('helvetica','bolditalic');
+  pdf.setFontSize(42);
+  pdf.setTextColor(255,250,235);
+  pdf.text(st.name,cx,H*0.505,{align:'center'});
+
+  // underline
+  const nW=pdf.getTextWidth(st.name);
+  pdf.setDrawColor(212,168,67);
+  pdf.setLineWidth(1.5);
+  pdf.line(cx-nW/2,H*0.525,cx+nW/2,H*0.525);
+
+  // has successfully completed
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(13);
+  pdf.setTextColor(180,165,130);
+  pdf.text('has successfully completed the course',cx,H*0.60,{align:'center'});
+
+  // Course name
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(20);
+  pdf.setTextColor(240,200,100);
+  pdf.text(st.course||'',cx,H*0.675,{align:'center'});
+
+  // Period
+  if(st.start||st.end){
+    const period=[st.start,st.end].filter(Boolean).join(' – ');
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(11);
+    pdf.setTextColor(150,135,100);
+    pdf.text(period,cx,H*0.76,{align:'center'});
+  }
+
+  // footer
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(9);
+  pdf.setTextColor(90,80,55);
+  pdf.text('Issued with excellence · CertGen Studio',cx,H*0.875,{align:'center'});
+}
+
+/* ── Sample Excel Download ── */
+function downloadSample(){
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['Student Name','Course Name','Title Name','Start Date','End Date'],
+    ['Alice Johnson','Full Stack Development','Certificate of Completion','01-Jan-2025','30-Jun-2025'],
+    ['Bob Williams','Data Science Fundamentals','Certificate of Achievement','15-Feb-2025','15-Aug-2025'],
+    ['Carol Smith','UI/UX Design','Certificate of Proficiency','01-Mar-2025','01-Sep-2025'],
+  ]);
+  ws['!cols']=[{wch:22},{wch:28},{wch:28},{wch:14},{wch:14}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Students');
+  XLSX.writeFile(wb,'certgen_sample_template.xlsx');
+  toast('Sample Excel downloaded','inf');
+}
+
+/* ── Utilities ── */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function dlBlob(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=Object.assign(document.createElement('a'),{href:url,download:name});
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function showOverlay(c,t,msg){document.getElementById('overlay').classList.add('show');setProgress(c,t,msg);}
+function setProgress(c,t,msg){
+  document.getElementById('pbarFill').style.width=t?`${Math.round(c/t*100)}%`:'0%';
+  document.getElementById('pbarLabel').textContent=`${c} / ${t}`;
+  document.getElementById('modalSub').textContent=msg;
+}
+function hideOverlay(){document.getElementById('overlay').classList.remove('show');}
+
+let toastTimer;
+function toast(msg,type='inf'){
+  const el=document.getElementById('toast');
+  el.className=`toast ${type} show`;
+  el.innerHTML=`<span>${msg}</span>`;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),4500);
+}
+
+/* drag-and-drop */
+[['tplZone',ev=>loadTemplate({target:{files:[ev.dataTransfer.files[0]]}})],
+ ['xlsZone',ev=>loadExcel({target:{files:[ev.dataTransfer.files[0]]}})]].forEach(([id,fn])=>{
+  const z=document.getElementById(id);
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over');});
+  z.addEventListener('dragleave',()=>z.classList.remove('over'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');fn(e);});
+});
+</script>
+</body>
+</html>
