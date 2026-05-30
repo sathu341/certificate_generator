@@ -7,417 +7,851 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --deep:      #0d0d14;
-  --surface:   #13131f;
-  --card:      #1a1a2e;
-  --card2:     #1e1e32;
-  --border:    #2a2a45;
-  --border2:   #333355;
-  --gold:      #d4a843;
-  --gold2:     #f0c96a;
-  --gold-dim:  #8a6820;
-  --gold-glow: rgba(212,168,67,.18);
-  --text:      #e8e6f0;
-  --muted:     #7a789a;
-  --soft:      #4a4870;
-  --green:     #4caf7d;
-  --red:       #e05555;
-  --radius:    12px;
+  --bg:#0f0f1a; --s1:#161624; --s2:#1c1c2e; --s3:#222238;
+  --b1:#2a2a44; --b2:#363658; --b3:#44446a;
+  --gold:#d4a843; --gold2:#f0c96a; --goldd:#8a6820; --goldg:rgba(212,168,67,.14);
+  --txt:#eae8f4; --mut:#7a78a2; --soft:#3e3c62;
+  --grn:#4caf7d; --red:#e05555; --blu:#5588ee;
+  --r:10px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Outfit',sans-serif;background:var(--deep);color:var(--text);min-height:100vh;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(212,168,67,.06) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 80% 90%,rgba(85,119,204,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+html{height:100%;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--txt);height:100%;display:flex;flex-direction:column;overflow:hidden;}
 
 /* HEADER */
-header{position:sticky;top:0;z-index:50;background:rgba(13,13,20,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;}
-.brand{display:flex;align-items:center;gap:12px;}
-.brand-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--gold-dim),var(--gold));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px var(--gold-glow);}
-.brand-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--gold2);letter-spacing:.02em;}
-.brand-tag{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--border2);border-radius:20px;padding:3px 10px;}
+header{height:58px;background:rgba(15,15,26,.97);border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;z-index:10;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--goldd),var(--gold));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.logo-name{font-size:18px;font-weight:700;color:var(--gold2);letter-spacing:.02em;}
+.logo-sep{width:1px;height:24px;background:var(--b2);}
+.logo-tag{font-size:11px;color:var(--mut);letter-spacing:.08em;text-transform:uppercase;}
+.header-steps{display:flex;gap:6px;margin-left:auto;}
+.step-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
+  font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  border:1px solid var(--b2);color:var(--mut);background:var(--s2);transition:all .2s;}
+.step-pill.active{background:var(--goldg);border-color:var(--goldd);color:var(--gold);}
+.step-pill.done{background:rgba(76,175,125,.1);border-color:rgba(76,175,125,.3);color:var(--grn);}
+.step-num{width:18px;height:18px;border-radius:50%;background:var(--b2);
+  display:flex;align-items:center;justify-content:center;font-size:10px;}
+.step-pill.active .step-num{background:var(--goldd);}
+.step-pill.done .step-num{background:rgba(76,175,125,.3);}
 
-/* LAYOUT */
-.layout{display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 64px);position:relative;z-index:1;}
+/* BODY LAYOUT */
+.app-body{flex:1;display:flex;overflow:hidden;}
 
-/* SIDEBAR */
-.sidebar{border-right:1px solid var(--border);padding:28px 22px;display:flex;flex-direction:column;gap:22px;overflow-y:auto;background:rgba(19,19,31,.85);}
+/* LEFT PANEL */
+.lpanel{width:300px;flex-shrink:0;border-right:1px solid var(--b1);
+  background:var(--s1);display:flex;flex-direction:column;overflow:hidden;}
+.lpanel-tabs{display:flex;border-bottom:1px solid var(--b1);}
+.ltab{flex:1;padding:11px 8px;font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;cursor:pointer;border:none;background:transparent;
+  color:var(--mut);border-bottom:2px solid transparent;transition:all .2s;}
+.ltab.on{color:var(--gold);border-bottom-color:var(--gold);background:rgba(212,168,67,.04);}
+.lpanel-body{flex:1;overflow-y:auto;padding:16px;}
 
-/* PANEL */
-.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-.panel-head{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--card2);}
-.panel-icon{width:28px;height:28px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
-.panel-title{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
-.panel-body{padding:18px;}
+/* SECTIONS */
+.sec{margin-bottom:18px;}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--goldd);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--b2);}
 
 /* DROP ZONE */
-.drop-zone{border:2px dashed var(--border2);border-radius:10px;padding:26px 16px;text-align:center;cursor:pointer;transition:all .25s;background:var(--surface);position:relative;}
-.drop-zone input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
-.drop-zone:hover,.drop-zone.over{border-color:var(--gold);background:var(--gold-glow);}
-.dz-icon{font-size:32px;margin-bottom:10px;display:block;}
-.dz-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
-.dz-hint{font-size:11.5px;color:var(--muted);line-height:1.6;}
-.dz-hint b{color:var(--gold);}
+.dz{border:2px dashed var(--b2);border-radius:var(--r);padding:18px 12px;text-align:center;
+  cursor:pointer;transition:all .22s;background:var(--bg);position:relative;overflow:hidden;}
+.dz input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+.dz:hover,.dz.over{border-color:var(--gold);background:var(--goldg);}
+.dz.loaded{border-color:rgba(76,175,125,.45);border-style:solid;}
+.dz-ico{font-size:26px;display:block;margin-bottom:7px;}
+.dz-ttl{font-size:12.5px;font-weight:600;margin-bottom:3px;}
+.dz-hint{font-size:10.5px;color:var(--mut);line-height:1.5;}
+.dz-hint b{color:var(--gold2);}
 
-.file-pill{display:flex;align-items:center;gap:8px;background:rgba(76,175,125,.1);border:1px solid rgba(76,175,125,.3);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--green);font-weight:500;margin-top:10px;word-break:break-all;}
+/* FIELD PANEL – draggable text items */
+.field-item{background:var(--s2);border:1px solid var(--b2);border-radius:8px;
+  padding:10px 12px;margin-bottom:8px;}
+.field-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.field-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.field-lbl{font-size:11.5px;font-weight:600;flex:1;}
+.field-toggle{width:26px;height:14px;border-radius:10px;background:var(--b2);
+  cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0;}
+.field-toggle.on{background:var(--goldd);}
+.field-toggle::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;
+  border-radius:50%;background:#fff;transition:left .2s;}
+.field-toggle.on::after{left:14px;}
+.field-ctrl{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ctrl-row{display:flex;flex-direction:column;gap:3px;}
+.ctrl-row label{font-size:9.5px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase;}
+.ctrl-row input[type=range]{width:100%;accent-color:var(--gold);height:3px;}
+.ctrl-row .rval{font-size:10px;color:var(--gold);text-align:right;}
+.ctrl-color{width:28px;height:22px;border:none;border-radius:4px;cursor:pointer;background:none;}
+.ctrl-sel{width:100%;background:var(--bg);border:1px solid var(--b2);border-radius:5px;
+  padding:4px 6px;color:var(--txt);font-size:11px;font-family:'Outfit',sans-serif;outline:none;}
 
-/* THUMB */
-.tpl-thumb{width:100%;max-height:150px;object-fit:contain;border-radius:8px;border:1px solid var(--border2);margin-top:10px;background:var(--surface);}
+/* FILE PILL */
+.fpill{display:flex;align-items:center;gap:6px;background:rgba(76,175,125,.08);
+  border:1px solid rgba(76,175,125,.25);border-radius:7px;padding:7px 10px;
+  font-size:11px;color:var(--grn);font-weight:500;margin-top:8px;word-break:break-all;}
 
-/* COLUMN GUIDE */
-.col-guide{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
-.col-chip{background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
-.col-chip b{color:var(--gold2);}
-.col-chip .dot{width:6px;height:6px;background:var(--gold-dim);border-radius:50%;flex-shrink:0;}
+/* COL CHIPS */
+.col-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;}
+.ccol{background:var(--s3);border:1px solid var(--b2);border-radius:5px;padding:5px 8px;
+  font-size:10px;color:var(--mut);display:flex;align-items:center;gap:4px;}
+.ccol .d{width:4px;height:4px;border-radius:50%;background:var(--goldd);}
+.ccol b{color:var(--gold2);}
 
-/* INFO BOX */
-.info-box{background:rgba(212,168,67,.05);border:1px solid rgba(212,168,67,.15);border-radius:8px;padding:13px 15px;font-size:12px;color:var(--muted);line-height:1.8;}
-.info-box b{color:var(--gold);}
-
-/* MAIN */
-.main{display:flex;flex-direction:column;background:rgba(13,13,20,.5);}
-
-/* TOOLBAR */
-.toolbar{padding:16px 32px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.count-badge{font-size:13px;color:var(--muted);margin-left:auto;}
-.count-badge strong{color:var(--gold);}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;letter-spacing:.02em;}
-.btn-primary{background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:#0d0d14;box-shadow:0 2px 12px rgba(212,168,67,.25);}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(212,168,67,.4);filter:brightness(1.08);}
-.btn-primary:disabled{background:var(--border2);color:var(--soft);cursor:not-allowed;transform:none;box-shadow:none;filter:none;}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+/* BTN */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;
+  font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;border:none;
+  transition:all .17s;white-space:nowrap;letter-spacing:.02em;}
+.btn-gold{background:linear-gradient(135deg,var(--goldd),var(--gold));color:#0d0d14;
+  box-shadow:0 2px 10px rgba(212,168,67,.2);}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(212,168,67,.36);filter:brightness(1.07);}
+.btn-gold:disabled{background:var(--b2);color:var(--soft);cursor:not-allowed;transform:none;box-shadow:none;filter:none;}
+.btn-ghost{background:transparent;color:var(--mut);border:1px solid var(--b2);}
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
-.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(224,85,85,.3);font-size:12px;padding:7px 14px;}
-.btn-danger:hover{background:rgba(224,85,85,.08);border-color:var(--red);}
-.btn-sm{padding:6px 13px;font-size:12px;}
+.btn-red{background:transparent;color:var(--red);border:1px solid rgba(224,85,85,.25);font-size:11px;padding:6px 12px;}
+.btn-red:hover{background:rgba(224,85,85,.08);border-color:var(--red);}
+.btn-sm{padding:6px 12px;font-size:11.5px;}
+.btn-full{width:100%;justify-content:center;}
+
+/* CENTRE – canvas editor */
+.centre{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.canvas-toolbar{height:46px;background:var(--s1);border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0;}
+.ct-label{font-size:11px;color:var(--mut);margin-right:4px;}
+.canvas-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;
+  padding:28px;background:var(--bg);scroll-behavior:smooth;}
+.canvas-outer{position:relative;box-shadow:0 12px 50px rgba(0,0,0,.6);transform-origin:top left;margin:auto;}
+#certCanvas{display:block;border-radius:4px;}
+/* Drag handles */
+.dh{position:absolute;display:flex;align-items:center;justify-content:center;
+  cursor:move;user-select:none;white-space:nowrap;pointer-events:auto;
+  transform:translateX(-50%);transition:outline .1s;}
+.dh:hover{outline:2px dashed rgba(255,255,255,.5);outline-offset:4px;border-radius:4px;}
+.dh.dragging{outline:2px solid var(--gold);outline-offset:4px;border-radius:4px;z-index:99;}
+.dh-grip{position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:#000;font-size:9px;font-weight:700;
+  padding:1px 6px;border-radius:3px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none;}
+.dh:hover .dh-grip,.dh.dragging .dh-grip{opacity:1;}
+
+/* RIGHT PANEL */
+.rpanel{width:280px;flex-shrink:0;border-left:1px solid var(--b1);
+  background:var(--s1);display:flex;flex-direction:column;overflow:hidden;}
+.rp-head{padding:14px 16px;border-bottom:1px solid var(--b1);font-size:11px;
+  font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+.rp-body{flex:1;overflow-y:auto;padding:14px;}
 
 /* TABLE */
-.table-area{flex:1;overflow-y:auto;padding:28px 32px;}
-.empty{text-align:center;padding:80px 20px;color:var(--soft);}
-.empty-art{width:90px;height:90px;margin:0 auto 20px;background:var(--card);border:2px dashed var(--border2);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:40px;}
-.empty h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--muted);margin-bottom:8px;}
-.empty p{font-size:13px;color:var(--soft);max-width:320px;margin:0 auto;line-height:1.6;}
-.tbl-wrap{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}
+.tbl-wrap{border-radius:8px;border:1px solid var(--b1);overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
-thead{background:var(--card2);}
-th{padding:13px 16px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:left;}
-th:first-child{width:50px;text-align:center;}
-tbody tr{border-top:1px solid var(--border);transition:background .12s;cursor:pointer;}
-tbody tr:hover{background:rgba(212,168,67,.04);}
+thead{background:var(--s3);}
+th{padding:10px 12px;font-size:9.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--gold);text-align:left;}
+th:first-child{width:40px;text-align:center;}
+tbody tr{border-top:1px solid var(--b1);transition:background .1s;cursor:pointer;}
+tbody tr:hover{background:rgba(212,168,67,.035);}
 tbody tr.sel{background:rgba(212,168,67,.07);}
-td{padding:12px 16px;font-size:13px;}
+td{padding:10px 12px;font-size:12px;}
 td:first-child{text-align:center;}
-.chk{width:16px;height:16px;cursor:pointer;accent-color:var(--gold);}
-.name-cell{font-weight:600;color:var(--text);}
-.dim{color:var(--muted);font-size:12px;}
-.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.06em;}
-.chip-ok{background:rgba(76,175,125,.12);color:var(--green);border:1px solid rgba(76,175,125,.25);}
-.row-num{color:var(--soft);font-size:11px;}
+.chk{width:14px;height:14px;cursor:pointer;accent-color:var(--gold);}
+.nm{font-weight:600;}
+.dm{color:var(--mut);font-size:11px;}
+.chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.06em;}
+.chip-ok{background:rgba(76,175,125,.1);color:var(--grn);border:1px solid rgba(76,175,125,.2);}
 
-/* PROGRESS */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;}
+/* OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
+  z-index:200;align-items:center;justify-content:center;}
 .overlay.show{display:flex;}
-.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:40px 48px;text-align:center;min-width:340px;box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(212,168,67,.1);}
-.modal-icon{font-size:40px;margin-bottom:14px;}
-.modal-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold2);margin-bottom:6px;}
-.modal-sub{font-size:13px;color:var(--muted);margin-bottom:24px;min-height:20px;}
-.pbar-track{background:var(--border);border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px;}
-.pbar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold2));border-radius:8px;width:0%;transition:width .35s ease;}
-.pbar-label{font-size:12px;color:var(--soft);}
+.modal{background:var(--s2);border:1px solid var(--b2);border-radius:16px;padding:36px 44px;
+  text-align:center;min-width:320px;box-shadow:0 28px 70px rgba(0,0,0,.5);}
+.modal-ico{font-size:36px;margin-bottom:12px;animation:spin 1.5s linear infinite;display:block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.modal-ttl{font-size:20px;font-weight:700;color:var(--gold2);margin-bottom:5px;}
+.modal-sub{font-size:12px;color:var(--mut);margin-bottom:20px;min-height:16px;}
+.pbar{background:var(--b1);border-radius:8px;height:6px;overflow:hidden;margin-bottom:8px;}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--goldd),var(--gold2));border-radius:8px;width:0%;transition:width .3s;}
+.pbar-lbl{font-size:11px;color:var(--soft);}
 
 /* TOAST */
-.toast{position:fixed;bottom:28px;right:28px;z-index:300;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:13px 18px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;box-shadow:0 12px 32px rgba(0,0,0,.3);transform:translateY(20px) scale(.97);opacity:0;transition:all .28s;max-width:380px;pointer-events:none;}
+.toast{position:fixed;bottom:22px;right:22px;z-index:300;background:var(--s2);
+  border:1px solid var(--b2);border-radius:9px;padding:11px 16px;font-size:12px;color:var(--txt);
+  display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.3);
+  transform:translateY(16px) scale(.97);opacity:0;transition:all .25s;max-width:360px;pointer-events:none;}
 .toast.show{transform:translateY(0) scale(1);opacity:1;}
-.toast.ok{border-left:3px solid var(--green);}
+.toast.ok{border-left:3px solid var(--grn);}
 .toast.err{border-left:3px solid var(--red);}
 .toast.inf{border-left:3px solid var(--gold);}
 
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+/* empty */
+.empty-rp{text-align:center;padding:40px 16px;color:var(--soft);}
+.empty-rp .ei{font-size:32px;margin-bottom:10px;}
+.empty-rp p{font-size:11.5px;line-height:1.6;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px;}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-  <div class="brand">
-    <div class="brand-mark">🎓</div>
-    <div class="brand-name">CertGen Studio</div>
+  <div class="logo">
+    <div class="logo-mark">🎓</div>
+    <div class="logo-name">CertGen Studio</div>
   </div>
-  <div class="brand-tag">Certificate Generator</div>
+  <div class="logo-sep"></div>
+  <div class="logo-tag">Certificate Generator</div>
+  <div class="header-steps">
+    <div class="step-pill active" id="sp1"><div class="step-num">1</div>Setup</div>
+    <div class="step-pill" id="sp2"><div class="step-num">2</div>Position</div>
+    <div class="step-pill" id="sp3"><div class="step-num">3</div>Generate</div>
+  </div>
 </header>
 
-<div class="layout">
+<div class="app-body">
 
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
+  <!-- ── LEFT PANEL ── -->
+  <div class="lpanel">
+    <div class="lpanel-tabs">
+      <button class="ltab on" onclick="lswitch('upload',this)">📁 Upload</button>
+      <button class="ltab" onclick="lswitch('fields',this)">🔤 Fields</button>
+      <button class="ltab" onclick="lswitch('students',this)">👥 Students</button>
+    </div>
 
-    <!-- Step 1: Template -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-icon">🖼️</div>
-        <div class="panel-title">Step 1 — Certificate Template</div>
-      </div>
-      <div class="panel-body">
-        <div class="drop-zone" id="tplZone">
-          <input type="file" id="tplFile" accept="image/*" onchange="loadTemplate(event)">
-          <span class="dz-icon">🗂️</span>
-          <div class="dz-title">Upload Template Image</div>
-          <div class="dz-hint">PNG or JPG used as the certificate background<br>Skip to use the built-in elegant design</div>
+    <!-- TAB: UPLOAD -->
+    <div class="lpanel-body" id="lt-upload">
+      <div class="sec">
+        <div class="sec-title">Certificate Template</div>
+        <div class="dz" id="tplZone">
+          <input type="file" id="tplFile" accept="image/*,application/pdf" onchange="loadTemplate(event)">
+          <span class="dz-ico">🖼️</span>
+          <div class="dz-ttl">Upload Template</div>
+          <div class="dz-hint">PNG, JPG or <b>PDF</b> (first page used)</div>
         </div>
         <div id="tplStatus"></div>
-        <img id="tplThumb" class="tpl-thumb" style="display:none" alt="template preview">
       </div>
-    </div>
 
-    <!-- Step 2: Excel -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-icon">📊</div>
-        <div class="panel-title">Step 2 — Upload Student Excel</div>
-      </div>
-      <div class="panel-body">
-        <div class="drop-zone" id="xlsZone">
+      <div class="sec">
+        <div class="sec-title">Student Excel</div>
+        <div class="dz" id="xlsZone">
           <input type="file" id="xlsFile" accept=".xlsx,.xls,.csv" onchange="loadExcel(event)">
-          <span class="dz-icon">📋</span>
-          <div class="dz-title">Upload Excel / CSV File</div>
-          <div class="dz-hint">Your spreadsheet must have these <b>5 columns</b>:</div>
+          <span class="dz-ico">📊</span>
+          <div class="dz-ttl">Upload Excel / CSV</div>
+          <div class="dz-hint">Required columns:</div>
         </div>
-
-        <!-- Column reference -->
-        <div class="col-guide" style="margin-top:12px;">
-          <div class="col-chip"><span class="dot"></span><b>Student Name</b></div>
-          <div class="col-chip"><span class="dot"></span><b>Course Name</b></div>
-          <div class="col-chip"><span class="dot"></span><b>Title Name</b></div>
-          <div class="col-chip"><span class="dot"></span><b>Start Date</b></div>
-          <div class="col-chip"><span class="dot"></span><b>End Date</b></div>
+        <div class="col-grid">
+          <div class="ccol"><span class="d"></span><b>Student Name</b></div>
+          <div class="ccol"><span class="d"></span><b>Course Name</b></div>
+          <div class="ccol"><span class="d"></span><b>Start Date</b></div>
+          <div class="ccol"><span class="d"></span><b>End Date</b></div>
         </div>
+        <div id="xlsStatus"></div>
+      </div>
 
-        <div id="xlsStatus" style="margin-top:10px;"></div>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="dlSample()">⬇ Sample Excel</button>
+    </div>
+
+    <!-- TAB: FIELDS -->
+    <div class="lpanel-body" id="lt-fields" style="display:none">
+      <div style="font-size:11px;color:var(--mut);background:var(--s3);border-radius:7px;
+        padding:10px;margin-bottom:14px;line-height:1.7;border:1px solid var(--b2);">
+        🖱️ <b style="color:var(--gold)">Drag</b> the text labels directly on the certificate preview to position them.<br>
+        Use controls below to adjust size, color and style.
+      </div>
+      <div id="fieldsPanel">
+        <!-- generated by JS -->
       </div>
     </div>
 
-    <!-- Guide -->
-    <div class="info-box">
-      💡 <b>How it works</b><br>
-      1. Upload your certificate background image<br>
-      2. Upload the Excel file with all 5 columns filled<br>
-      3. Students appear in the table on the right<br>
-      4. Tick the ones you need → <b>Download ZIP</b><br>
-      Each student gets their own PDF certificate inside the ZIP.
-    </div>
-
-    <!-- Sample download hint -->
-    <div style="text-align:center;">
-      <button class="btn btn-ghost btn-sm" onclick="downloadSample()" style="width:100%;justify-content:center;">
-        ⬇ Download Sample Excel Template
-      </button>
-    </div>
-
-  </aside>
-
-  <!-- ── MAIN ── -->
-  <div class="main">
-
-    <div class="toolbar">
-      <button class="btn btn-ghost btn-sm" onclick="selectAll()">☑ Select All</button>
-      <button class="btn btn-ghost btn-sm" onclick="deselectAll()">☐ Deselect All</button>
-      <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Clear List</button>
-      <div class="count-badge" id="countBadge"><strong>0</strong> students &nbsp;·&nbsp; <strong>0</strong> selected</div>
-      <button class="btn btn-primary" id="dlBtn" onclick="generate()" disabled>⬇&nbsp; Download ZIP</button>
-    </div>
-
-    <div class="table-area">
-
-      <div class="empty" id="emptyState">
-        <div class="empty-art">🎓</div>
-        <h3>No Students Loaded</h3>
-        <p>Upload your Excel file with the required 5 columns. Students will appear here for selection.</p>
+    <!-- TAB: STUDENTS -->
+    <div class="lpanel-body" id="lt-students" style="display:none">
+      <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="selAll()">☑ All</button>
+        <button class="btn btn-ghost btn-sm" onclick="selNone()">☐ None</button>
+        <button class="btn btn-red btn-sm" onclick="clearStudents()">🗑 Clear</button>
       </div>
-
-      <div class="tbl-wrap" id="tblWrap" style="display:none;">
-        <table>
-          <thead>
-            <tr>
-              <th><input type="checkbox" class="chk" id="chkAll" onchange="toggleAll(this)"></th>
-              <th>#</th>
-              <th>Student Name</th>
-              <th>Course Name</th>
-              <th>Title</th>
-              <th>Start Date</th>
-              <th>End Date</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-
+      <div id="stuStatus" style="font-size:11px;color:var(--mut);margin-bottom:10px;"></div>
+      <div id="stuList"></div>
     </div>
   </div>
+
+  <!-- ── CANVAS ── -->
+  <div class="centre">
+    <div class="canvas-toolbar">
+      <span class="ct-label">Zoom</span>
+      <button class="btn btn-ghost btn-sm" onclick="zoom(-0.1)">－</button>
+      <span id="zoomLbl" style="font-size:11px;color:var(--gold);min-width:38px;text-align:center;">100%</span>
+      <button class="btn btn-ghost btn-sm" onclick="zoom(+0.1)">＋</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetZoom()">⤢ Fit</button>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="lswitch('fields',document.querySelectorAll(\'.ltab\')[1])">⚙ Adjust Fields</button>
+        <button class="btn btn-gold" id="dlBtn" onclick="generate()" disabled>⬇ Download ZIP</button>
+      </div>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <div style="text-align:center;padding:80px 20px;color:var(--soft);">
+        <div style="font-size:48px;margin-bottom:16px;opacity:.4;">🖼️</div>
+        <div style="font-size:16px;font-weight:600;color:var(--mut);margin-bottom:8px;">No Template Loaded</div>
+        <div style="font-size:12px;line-height:1.6;">Upload a certificate template<br>from the Upload tab to begin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div class="rpanel">
+    <div class="rp-head">Students &amp; Download</div>
+    <div class="rp-body">
+      <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="selAll()">☑ All</button>
+        <button class="btn btn-ghost btn-sm" onclick="selNone()">☐ None</button>
+      </div>
+      <div id="countBadge" style="font-size:11px;color:var(--mut);margin-bottom:10px;"></div>
+      <div id="rpStudents">
+        <div class="empty-rp">
+          <div class="ei">👥</div>
+          <p>Upload your Excel file.<br>Students will appear here for selection.</p>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--b1);">
+        <button class="btn btn-gold btn-full" id="dlBtn2" onclick="generate()" disabled>⬇ Download Selected as ZIP</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Progress -->
 <div class="overlay" id="overlay">
   <div class="modal">
-    <div class="modal-icon">⚙️</div>
-    <div class="modal-title">Generating Certificates</div>
+    <span class="modal-ico">⚙️</span>
+    <div class="modal-ttl">Generating Certificates</div>
     <div class="modal-sub" id="modalSub">Preparing…</div>
-    <div class="pbar-track"><div class="pbar-fill" id="pbarFill"></div></div>
-    <div class="pbar-label" id="pbarLabel">0 / 0</div>
+    <div class="pbar"><div class="pbar-fill" id="pbarFill"></div></div>
+    <div class="pbar-lbl" id="pbarLbl">0 / 0</div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let students = [];
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
 let templateURL = null;
-let uid = 0;
+let templateImg = null;
+let students    = [];
+let uid         = 0;
+let scale       = 1;
+let canvasW     = 0, canvasH = 0;
 
-/* ── Column name normaliser ── */
-function norm(s) {
-  return String(s || '').toLowerCase().replace(/[\s_\-]/g, '');
-}
-
-const COL_MAP = {
-  studentname:  ['studentname','name','fullname','student'],
-  coursename:   ['coursename','course','programname','program'],
-  titlename:    ['titlename','title','certtitle','certificatetitle','certificationtitle'],
-  startdate:    ['startdate','start','from','datefrom','commencedate'],
-  enddate:      ['enddate','end','to','dateto','completiondate','finishdate'],
+/* Fields config – each field is draggable & configurable */
+const FIELDS = {
+  titleName: {
+    id:'titleName', label:'Title (Student Name)', sample:'NUJUMA NAZAR',
+    color:'#f0c96a', size:40, bold:true, italic:false, align:'center',
+    xPct:50, yPct:15, enabled:true, dot:'#f0c96a'
+  },
+  studentName: {
+    id:'studentName', label:'Student Name', sample:'NUJUMA NAZAR',
+    color:'#000000', size:24, bold:true, italic:false, align:'center',
+    xPct:50, yPct:32, enabled:true, dot:'#000000'
+  },
+  courseName: {
+    id:'courseName', label:'Course Name', sample:'AI Integrated Digital Marketing',
+    color:'#000000', size:16, bold:true, italic:false, align:'center',
+    xPct:50, yPct:50, enabled:true, dot:'#000000'
+  },
+  startDate: {
+    id:'startDate', label:'Start Date', sample:'21-03-2024',
+    color:'#000000', size:12, bold:false, italic:false, align:'center',
+    xPct:50, yPct:65, enabled:true, dot:'#000000'
+  },
+  endDate: {
+    id:'endDate', label:'End Date', sample:'20-06-2024',
+    color:'#000000', size:12, bold:false, italic:false, align:'center',
+    xPct:50, yPct:73, enabled:true, dot:'#000000'
+  },
 };
 
-function findCol(headers, key) {
-  const norms = headers.map(norm);
-  const aliases = COL_MAP[key];
-  for (const alias of aliases) {
-    const i = norms.indexOf(alias);
-    if (i >= 0) return i;
+/* ══════════════════════════════════════════════
+   LEFT PANEL TABS
+══════════════════════════════════════════════ */
+function lswitch(id, btn){
+  document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  ['lt-upload','lt-fields','lt-students'].forEach(t=>{
+    document.getElementById(t).style.display = (t==='lt-'+id)?'block':'none';
+  });
+}
+
+/* ══════════════════════════════════════════════
+   TEMPLATE LOADING
+══════════════════════════════════════════════ */
+function loadTemplate(e){
+  const file=e.target.files[0]; if(!file) return;
+  if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){
+    toast('Converting PDF…','inf');
+    loadPdfAsImg(file);
+  } else {
+    const r=new FileReader();
+    r.onload=ev=>setTemplate(ev.target.result, file.name);
+    r.readAsDataURL(file);
   }
-  return -1;
 }
 
-/* ── Template ── */
-function loadTemplate(e) {
-  const file = e.target.files[0]; if (!file) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    templateURL = ev.target.result;
-    document.getElementById('tplStatus').innerHTML =
-      `<div class="file-pill">✅ ${esc(file.name)}</div>`;
-    const img = document.getElementById('tplThumb');
-    img.src = templateURL; img.style.display = 'block';
-    toast('Template loaded', 'ok');
+async function loadPdfAsImg(file){
+  try{
+    if(!window.pdfjsLib){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+    const ab=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    const pg=await pdf.getPage(1);
+    const vp=pg.getViewport({scale:2.5});
+    const cv=document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    setTemplate(cv.toDataURL('image/jpeg',0.95), file.name);
+  }catch(err){toast('PDF error: '+err.message,'err');}
+}
+
+function loadScript(src){
+  return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+}
+
+function setTemplate(url, name){
+  templateURL=url;
+  templateImg=new Image();
+  templateImg.onload=()=>{
+    canvasW=templateImg.naturalWidth;
+    canvasH=templateImg.naturalHeight;
+    document.getElementById('tplStatus').innerHTML=
+      `<div class="fpill">✅ ${esc(name)}</div>`;
+    document.getElementById('tplZone').classList.add('loaded');
+    buildCanvas();
+    buildFieldsPanel();
+    fitZoom();
+    setStep(2);
+    toast('Template loaded','ok');
   };
-  r.readAsDataURL(file);
+  templateImg.src=url;
 }
 
-/* ── Excel ── */
-function loadExcel(e) {
-  const file = e.target.files[0]; if (!file) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    try {
-      const wb   = XLSX.read(ev.target.result, { type: 'binary' });
-      const ws   = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'dd-mmm-yyyy' });
-      if (rows.length < 2) { toast('File is empty or has no data rows', 'err'); return; }
+/* ══════════════════════════════════════════════
+   CANVAS + DRAG HANDLES
+══════════════════════════════════════════════ */
+let outerEl=null;
 
-      const headers = rows[0];
-      const snIdx = findCol(headers, 'studentname');
-      const cnIdx = findCol(headers, 'coursename');
-      const tnIdx = findCol(headers, 'titlename');
-      const sdIdx = findCol(headers, 'startdate');
-      const edIdx = findCol(headers, 'enddate');
+function buildCanvas(){
+  const wrap=document.getElementById('canvasWrap');
+  wrap.innerHTML='';
 
-      const missing = [];
-      if (snIdx < 0) missing.push('Student Name');
-      if (cnIdx < 0) missing.push('Course Name');
-      if (tnIdx < 0) missing.push('Title Name');
-      if (sdIdx < 0) missing.push('Start Date');
-      if (edIdx < 0) missing.push('End Date');
+  outerEl=document.createElement('div');
+  outerEl.className='canvas-outer';
+  outerEl.id='canvasOuter';
+  outerEl.style.cssText=`width:${canvasW}px;height:${canvasH}px;transform-origin:top left;`;
 
-      if (missing.length) {
-        toast(`Missing columns: ${missing.join(', ')}`, 'err');
-        document.getElementById('xlsStatus').innerHTML =
-          `<div style="margin-top:10px;background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.3);border-radius:8px;padding:10px 13px;font-size:12px;color:#e05555;">
-            ⚠️ Missing columns:<br><b>${missing.join(', ')}</b>
-          </div>`;
+  const cv=document.createElement('canvas');
+  cv.id='certCanvas';
+  cv.width=canvasW; cv.height=canvasH;
+  outerEl.appendChild(cv);
+
+  // Draw template
+  const ctx=cv.getContext('2d');
+  ctx.drawImage(templateImg,0,0,canvasW,canvasH);
+
+  // Create drag handles for each enabled field
+  Object.values(FIELDS).forEach(f=>{
+    if(f.enabled) createHandle(f);
+  });
+
+  wrap.appendChild(outerEl);
+  applyZoom();
+}
+
+function createHandle(f){
+  if(!outerEl) return;
+  let old=document.getElementById('dh-'+f.id);
+  if(old) old.remove();
+
+  const el=document.createElement('div');
+  el.className='dh';
+  el.id='dh-'+f.id;
+
+  const grip=document.createElement('div');
+  grip.className='dh-grip';
+  grip.textContent=f.label;
+  el.appendChild(grip);
+
+  const txt=document.createElement('span');
+  txt.id='dhtxt-'+f.id;
+  el.appendChild(txt);
+
+  positionHandle(el, f);
+  styleHandle(el, f);
+
+  // DRAG
+  let dragging=false, startX, startY, startXPct, startYPct;
+  el.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    dragging=true;
+    el.classList.add('dragging');
+    startX=e.clientX; startY=e.clientY;
+    startXPct=f.xPct; startYPct=f.yPct;
+    const curScale=getCurrentScale();
+
+    const onMove=e=>{
+      if(!dragging) return;
+      const dx=(e.clientX-startX)/curScale;
+      const dy=(e.clientY-startY)/curScale;
+      f.xPct=Math.min(95,Math.max(5, startXPct + dx/canvasW*100));
+      f.yPct=Math.min(98,Math.max(2, startYPct + dy/canvasH*100));
+      positionHandle(el, f);
+      // sync slider
+      const sy=document.getElementById('sl-y-'+f.id);
+      const sx=document.getElementById('sl-x-'+f.id);
+      if(sy) sy.value=f.yPct.toFixed(1);
+      if(sx) sx.value=f.xPct.toFixed(1);
+      updateSliderVals(f);
+    };
+    const onUp=()=>{
+      dragging=false;
+      el.classList.remove('dragging');
+      window.removeEventListener('mousemove',onMove);
+      window.removeEventListener('mouseup',onUp);
+    };
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('mouseup',onUp);
+  });
+
+  // Touch drag
+  el.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const t=e.touches[0];
+    startX=t.clientX; startY=t.clientY;
+    startXPct=f.xPct; startYPct=f.yPct;
+    const curScale=getCurrentScale();
+    const onMove=e=>{
+      const t=e.touches[0];
+      const dx=(t.clientX-startX)/curScale;
+      const dy=(t.clientY-startY)/curScale;
+      f.xPct=Math.min(95,Math.max(5, startXPct + dx/canvasW*100));
+      f.yPct=Math.min(98,Math.max(2, startYPct + dy/canvasH*100));
+      positionHandle(el, f);
+      updateSliderVals(f);
+    };
+    const onUp=()=>{
+      el.removeEventListener('touchmove',onMove);
+      el.removeEventListener('touchend',onUp);
+    };
+    el.addEventListener('touchmove',onMove,{passive:false});
+    el.addEventListener('touchend',onUp);
+  },{passive:false});
+
+  outerEl.appendChild(el);
+}
+
+function positionHandle(el, f){
+  el.style.left=(f.xPct/100*canvasW)+'px';
+  el.style.top=(f.yPct/100*canvasH)+'px';
+}
+
+function styleHandle(el, f){
+  const txt=el.querySelector('span');
+  txt.textContent=f.sample;
+  txt.style.cssText=`
+    font-size:${f.size}px;
+    font-weight:${f.bold?'700':'400'};
+    font-style:${f.italic?'italic':'normal'};
+    color:${f.color};
+    font-family:'Arial',sans-serif;
+    letter-spacing:${f.id==='studentName'?'0.02em':'0'};
+    text-align:${f.align};
+    white-space:nowrap;
+  `;
+  el.style.transform=`translateX(${f.align==='center'?'-50%':f.align==='right'?'-100%':'0'})`;
+}
+
+function getCurrentScale(){
+  return parseFloat(document.getElementById('canvasOuter')?.style.transform?.match(/scale\((.+)\)/)?.[1] || 1);
+}
+
+/* ══════════════════════════════════════════════
+   ZOOM
+══════════════════════════════════════════════ */
+function zoom(delta){
+  scale=Math.min(3,Math.max(0.1, scale+delta));
+  applyZoom();
+}
+function resetZoom(){ scale=1; applyZoom(); }
+function fitZoom(){
+  const wrap=document.getElementById('canvasWrap');
+  if(!wrap || !canvasW || !canvasH) return;
+  const pw=wrap.clientWidth-80, ph=wrap.clientHeight-80;
+  if(pw<=0 || ph<=0) return;
+  const sx=pw/canvasW, sy=ph/canvasH;
+  scale=Math.min(sx,sy);
+  applyZoom();
+}
+function applyZoom(){
+  const el=document.getElementById('canvasOuter');
+  if(!el) return;
+  el.style.transform=`scale(${scale})`;
+  document.getElementById('zoomLbl').textContent=Math.round(scale*100)+'%';
+}
+
+/* ══════════════════════════════════════════════
+   FIELDS PANEL
+══════════════════════════════════════════════ */
+function buildFieldsPanel(){
+  const container=document.getElementById('fieldsPanel');
+  container.innerHTML='';
+  Object.values(FIELDS).forEach(f=>{
+    container.innerHTML+=`
+    <div class="field-item" id="fi-${f.id}">
+      <div class="field-hd">
+        <div class="field-dot" style="background:${f.dot}"></div>
+        <div class="field-lbl">${f.label}</div>
+        <button class="field-toggle ${f.enabled?'on':''}" id="ft-${f.id}" onclick="toggleField('${f.id}')"></button>
+      </div>
+      <div class="field-ctrl" id="fc-${f.id}" style="${f.enabled?'':'opacity:.35;pointer-events:none'}">
+        <div class="ctrl-row" style="grid-column:1/-1">
+          <label>Vertical Position</label>
+          <input type="range" id="sl-y-${f.id}" min="1" max="99" step="0.5" value="${f.yPct}"
+            oninput="fieldChange('${f.id}','yPct',+this.value)">
+          <div class="rval" id="rv-y-${f.id}">${f.yPct.toFixed(1)}%</div>
+        </div>
+        <div class="ctrl-row" style="grid-column:1/-1">
+          <label>Horizontal Position</label>
+          <input type="range" id="sl-x-${f.id}" min="1" max="99" step="0.5" value="${f.xPct}"
+            oninput="fieldChange('${f.id}','xPct',+this.value)">
+          <div class="rval" id="rv-x-${f.id}">${f.xPct.toFixed(1)}%</div>
+        </div>
+        <div class="ctrl-row">
+          <label>Font Size</label>
+          <input type="range" id="sl-fs-${f.id}" min="8" max="100" step="1" value="${f.size}"
+            oninput="fieldChange('${f.id}','size',+this.value)">
+          <div class="rval" id="rv-fs-${f.id}">${f.size}px</div>
+        </div>
+        <div class="ctrl-row">
+          <label>Color</label>
+          <input type="color" class="ctrl-color" id="cl-${f.id}" value="${f.color}"
+            oninput="fieldChange('${f.id}','color',this.value)">
+        </div>
+        <div class="ctrl-row">
+          <label>Align</label>
+          <select class="ctrl-sel" id="al-${f.id}" onchange="fieldChange('${f.id}','align',this.value)">
+            <option value="center" ${f.align==='center'?'selected':''}>Center</option>
+            <option value="left"   ${f.align==='left'?'selected':''}>Left</option>
+            <option value="right"  ${f.align==='right'?'selected':''}>Right</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>Style</label>
+          <select class="ctrl-sel" id="st-${f.id}" onchange="fieldStyleChange('${f.id}',this.value)">
+            <option value="normal" ${!f.bold&&!f.italic?'selected':''}>Normal</option>
+            <option value="bold"   ${f.bold&&!f.italic?'selected':''}>Bold</option>
+            <option value="italic" ${!f.bold&&f.italic?'selected':''}>Italic</option>
+            <option value="bolditalic" ${f.bold&&f.italic?'selected':''}>Bold Italic</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  });
+}
+
+function fieldChange(id, prop, val){
+  FIELDS[id][prop]=val;
+  // Update the rval label
+  if(prop==='yPct') document.getElementById('rv-y-'+id).textContent=val.toFixed(1)+'%';
+  if(prop==='xPct') document.getElementById('rv-x-'+id).textContent=val.toFixed(1)+'%';
+  if(prop==='size') document.getElementById('rv-fs-'+id).textContent=val+'px';
+  // Restyle handle
+  const el=document.getElementById('dh-'+id);
+  if(el){
+    positionHandle(el, FIELDS[id]);
+    styleHandle(el, FIELDS[id]);
+  }
+}
+
+function fieldStyleChange(id, val){
+  FIELDS[id].bold   = val.includes('bold');
+  FIELDS[id].italic = val.includes('italic');
+  const el=document.getElementById('dh-'+id);
+  if(el) styleHandle(el, FIELDS[id]);
+}
+
+function toggleField(id){
+  const f=FIELDS[id];
+  f.enabled=!f.enabled;
+  const btn=document.getElementById('ft-'+id);
+  const ctrl=document.getElementById('fc-'+id);
+  btn.classList.toggle('on',f.enabled);
+  ctrl.style.cssText=f.enabled?'':'opacity:.35;pointer-events:none';
+  // show/hide handle
+  const h=document.getElementById('dh-'+id);
+  if(h) h.style.display=f.enabled?'flex':'none';
+}
+
+function updateSliderVals(f){
+  const sy=document.getElementById('rv-y-'+f.id);
+  const sx=document.getElementById('rv-x-'+f.id);
+  if(sy) sy.textContent=f.yPct.toFixed(1)+'%';
+  if(sx) sx.textContent=f.xPct.toFixed(1)+'%';
+  const sly=document.getElementById('sl-y-'+f.id);
+  const slx=document.getElementById('sl-x-'+f.id);
+  if(sly) sly.value=f.yPct.toFixed(1);
+  if(slx) slx.value=f.xPct.toFixed(1);
+}
+
+/* ══════════════════════════════════════════════
+   EXCEL
+══════════════════════════════════════════════ */
+function norm(s){ return String(s||'').toLowerCase().replace(/[\s_\-]/g,''); }
+const CMAP={
+  studentname:['studentname','name','fullname','student'],
+  coursename:['coursename','course','programname','program'],
+  startdate:['startdate','start','from','datefrom'],
+  enddate:['enddate','end','to','dateto','finishdate'],
+};
+function findC(h,k){const n=h.map(norm);for(const a of CMAP[k]){const i=n.indexOf(a);if(i>=0)return i;}return -1;}
+
+function loadExcel(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'dd-mmm-yyyy'});
+      if(rows.length<2){toast('File empty','err');return;}
+      const h=rows[0];
+      const sn=findC(h,'studentname'),cn=findC(h,'coursename'),
+            sd=findC(h,'startdate'),ed=findC(h,'enddate');
+      const miss=[];
+      if(sn<0)miss.push('Student Name');if(cn<0)miss.push('Course Name');
+      if(sd<0)miss.push('Start Date');if(ed<0)miss.push('End Date');
+      if(miss.length){
+        toast('Missing: '+miss.join(', '),'err');
+        document.getElementById('xlsStatus').innerHTML=
+          `<div style="margin-top:8px;background:rgba(224,85,85,.09);border:1px solid rgba(224,85,85,.25);
+          border-radius:6px;padding:8px 10px;font-size:10.5px;color:var(--red);">
+          ⚠️ Missing columns:<br><b>${miss.join(', ')}</b></div>`;
         return;
       }
-
-      students = [];
-      let skipped = 0;
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const name  = String(row[snIdx] || '').trim();
-        const course = String(row[cnIdx] || '').trim();
-        const title  = String(row[tnIdx] || '').trim();
-        const start  = String(row[sdIdx] || '').trim();
-        const end    = String(row[edIdx] || '').trim();
-        if (!name) { skipped++; continue; }
-        students.push({ id: ++uid, name, course, title, start, end, sel: false });
+      students=[]; let sk=0;
+      for(let i=1;i<rows.length;i++){
+        const row=rows[i];
+        const name=String(row[sn]||'').trim();
+        if(!name){sk++;continue;}
+        students.push({
+          id:++uid,name,
+          course:String(row[cn]||'').trim(),
+          start:String(row[sd]||'').trim(),
+          end:String(row[ed]||'').trim(),
+          sel:false
+        });
       }
-
-      render();
-      document.getElementById('xlsStatus').innerHTML =
-        `<div class="file-pill">✅ ${esc(file.name)} — ${students.length} students loaded${skipped ? ` (${skipped} skipped)` : ''}</div>`;
-      toast(`${students.length} students imported`, 'ok');
-    } catch(err) {
-      toast('Parse error: ' + err.message, 'err');
-      console.error(err);
-    }
+      document.getElementById('xlsStatus').innerHTML=
+        `<div class="fpill" style="margin-top:8px;">✅ ${esc(file.name)} — ${students.length} students</div>`;
+      document.getElementById('xlsZone').classList.add('loaded');
+      renderStudents();
+      setStep(3);
+      toast(`${students.length} students loaded`,'ok');
+    }catch(err){toast('Parse error: '+err.message,'err');}
   };
   r.readAsBinaryString(file);
 }
 
-/* ── Render ── */
-function render() {
-  document.getElementById('emptyState').style.display = students.length ? 'none' : 'block';
-  document.getElementById('tblWrap').style.display    = students.length ? 'block' : 'none';
+/* ══════════════════════════════════════════════
+   STUDENT LIST (left + right panels)
+══════════════════════════════════════════════ */
+function renderStudents(){
+    const allSelected =
+    students.length &&
+    students.every(s => s.sel);
 
-  document.getElementById('tbody').innerHTML = students.map((st, i) => `
-    <tr id="r${st.id}" class="${st.sel ? 'sel' : ''}" onclick="toggleRow(${st.id})">
-      <td><input type="checkbox" class="chk" ${st.sel ? 'checked' : ''}
-        onclick="event.stopPropagation();chkRow(${st.id},this)"></td>
-      <td class="row-num">${i + 1}</td>
-      <td class="name-cell">${esc(st.name)}</td>
-      <td class="dim">${esc(st.course)}</td>
-      <td class="dim">${esc(st.title)}</td>
-      <td class="dim">${esc(st.start)}</td>
-      <td class="dim">${esc(st.end)}</td>
-      <td><span class="chip chip-ok">Ready</span></td>
-      <td><button class="btn btn-danger btn-sm"
-        onclick="event.stopPropagation();removeRow(${st.id})">✕</button></td>
-    </tr>`).join('');
+const chkAll = document.getElementById("chkAll");
 
-  updateCounts();
+if(chkAll){
+    chkAll.checked = allSelected;
 }
-
-function toggleRow(id){ const s=students.find(s=>s.id===id);if(s){s.sel=!s.sel;render();} }
-function chkRow(id,el){ const s=students.find(s=>s.id===id);if(s){s.sel=el.checked;updateCounts();} }
-function removeRow(id){ students=students.filter(s=>s.id!==id);render(); }
-function selectAll(){ students.forEach(s=>s.sel=true);render(); }
-function deselectAll(){ students.forEach(s=>s.sel=false);render(); }
-function clearAll(){ if(!students.length)return;students=[];render();toast('List cleared','inf'); }
-function toggleAll(el){ students.forEach(s=>s.sel=el.checked);render(); }
-
-function updateCounts(){
   const sel=students.filter(s=>s.sel).length;
   document.getElementById('countBadge').innerHTML=
-    `<strong>${students.length}</strong> students &nbsp;·&nbsp; <strong>${sel}</strong> selected`;
-  document.getElementById('dlBtn').disabled=sel===0;
+    `<strong style="color:var(--gold)">${students.length}</strong> students · <strong style="color:var(--gold)">${sel}</strong> selected`;
+  document.getElementById('stuStatus').innerHTML=
+    `<strong style="color:var(--gold)">${students.length}</strong> students · <strong style="color:var(--gold)">${sel}</strong> selected`;
+
+  // Right panel table
+  if(students.length===0){
+    document.getElementById('rpStudents').innerHTML=
+      `<div class="empty-rp"><div class="ei">👥</div><p>No students loaded.</p></div>`;
+    setDlEnabled(false);
+    return;
+  }
+
+  const rows=students.map((st,i)=>`
+    <tr id="tr${st.id}" class="${st.sel?'sel':''}" onclick="toggleStu(${st.id})">
+      <td><input type="checkbox"
+class="chk"
+${st.sel?'checked':''}
+onclick="event.stopPropagation()"
+onchange="chkStu(${st.id},this)"></td>
+      <td class="nm">${esc(st.name)}</td>
+      <td class="dm">${esc(st.course)}</td>
+    </tr>`).join('');
+
+  document.getElementById('rpStudents').innerHTML=
+    `<div class="tbl-wrap"><table>
+      <thead><tr>
+        <th><input type="checkbox" class="chk" id="chkAll" onchange="toggleAllChk(this)"></th>
+        <th>Name</th><th>Course</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+
+  // Left panel mini list
+  const miniRows=students.map(st=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1);">
+      <input type="checkbox" class="chk" ${st.sel?'checked':''} onchange="chkStu(${st.id},this)">
+      <div>
+        <div style="font-size:12px;font-weight:600;">${esc(st.name)}</div>
+        <div style="font-size:10px;color:var(--mut)">${esc(st.course)}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('stuList').innerHTML=miniRows;
+
+ setDlEnabled(
+    students.some(s => s.sel)
+);
 }
 
-/* ── Generate ── */
+function toggleStu(id){const s=students.find(s=>s.id===id);if(s){s.sel=!s.sel;renderStudents();}}
+function chkStu(id,el){const s=students.find(s=>s.id===id);if(s){s.sel=el.checked;renderStudents();}}
+function selAll(){students.forEach(s=>s.sel=true);renderStudents();}
+function selNone(){students.forEach(s=>s.sel=false);renderStudents();}
+function clearStudents(){students=[];renderStudents();toast('Cleared','inf');}
+function toggleAllChk(el){students.forEach(s=>s.sel=el.checked);renderStudents();}
+function setDlEnabled(v){
+  document.getElementById('dlBtn').disabled=!v;
+  document.getElementById('dlBtn2').disabled=!v;
+}
+
+/* ══════════════════════════════════════════════
+   GENERATE PDFs + ZIP
+══════════════════════════════════════════════ */
 async function generate(){
+  if(!templateURL){toast('Upload a template first','err');return;}
   const sel=students.filter(s=>s.sel);
-  if(!sel.length)return;
+  if(!sel.length){toast('Select at least one student','err');return;}
+
   showOverlay(0,sel.length,'Initializing…');
 
   try{
@@ -425,32 +859,87 @@ async function generate(){
     const zip=new JSZip();
     const folder=zip.folder('certificates');
 
+    // Determine orientation from image aspect
+    const isPortrait=canvasH>canvasW;
+    const pdfW=isPortrait?595.28:841.89;
+    const pdfH=isPortrait?841.89:595.28;
+    const orient=isPortrait?'portrait':'landscape';
+
     for(let i=0;i<sel.length;i++){
       const st=sel[i];
       setProgress(i,sel.length,`Creating: ${st.name}`);
 
-      const W=842,H=595;
-      const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[W,H]});
+      const pdf=new jsPDF({orientation:orient,unit:'pt',format:'a4'});
 
-      if(templateURL){
-        const fmt=templateURL.startsWith('data:image/png')?'PNG':'JPEG';
-        pdf.addImage(templateURL,fmt,0,0,W,H);
-      } else {
-        drawBg(pdf,W,H);
-      }
+      // Background template
+      const fmt=templateURL.startsWith('data:image/png')?'PNG':'JPEG';
+      pdf.addImage(
+    templateURL,
+    fmt,
+    0,
+    0,
+    pdfW,
+    pdfH,
+    "",
+    "FAST"
+);
 
-      drawContent(pdf,W,H,st);
+      // Build substituted text for each field
+      const fieldValues={
+        titleName:   st.name.toUpperCase(),
+        studentName: st.name.toUpperCase(),
+        courseName:  st.course,
+        startDate:   st.start,
+        endDate:     st.end,
+      };
+
+     Object.values(FIELDS).forEach(f => {
+
+    if (!f.enabled) return;
+
+    const val = fieldValues[f.id];
+    if (!val) return;
+
+    const xPt = (f.xPct / 100) * pdfW;
+    const yPt = (f.yPct / 100) * pdfH;
+
+    const [r,g,b] = hex2rgb(f.color);
+
+    pdf.setTextColor(r,g,b);
+
+    const fontStyle =
+        f.bold && f.italic
+            ? "bolditalic"
+            : f.bold
+            ? "bold"
+            : f.italic
+            ? "italic"
+            : "normal";
+
+    pdf.setFont("helvetica", fontStyle);
+
+    pdf.setFontSize(f.size * 0.75);
+
+    pdf.text(val, xPt, yPt, {
+        align: f.align
+    });
+
+});
 
       const buf=pdf.output('arraybuffer');
-      const safe=st.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ +/g,'_');
+      const safe =
+    st.name
+      .trim()
+      .replace(/[<>:"/\\|?*]/g,"")
+      .replace(/\s+/g,"_");
       folder.file(`${safe}_certificate.pdf`,buf);
-      await sleep(12);
+      await sleep(14);
     }
 
-    setProgress(sel.length,sel.length,'Compressing ZIP…');
-    await sleep(50);
-    const blob=await zip.generateAsync({type:'blob'},meta=>{
-      setProgress(sel.length,sel.length,`Compressing… ${Math.round(meta.percent)}%`);
+    setProgress(sel.length,sel.length,'Zipping…');
+    await sleep(40);
+    const blob=await zip.generateAsync({type:'blob'},m=>{
+      setProgress(sel.length,sel.length,`Zipping… ${Math.round(m.percent)}%`);
     });
 
     hideOverlay();
@@ -463,101 +952,39 @@ async function generate(){
   }
 }
 
-/* ── PDF Background ── */
-function drawBg(pdf,W,H){
-  pdf.setFillColor(10,12,28);
-  pdf.rect(0,0,W,H,'F');
-  pdf.setDrawColor(180,140,55);
-  pdf.setLineWidth(3.5);
-  pdf.rect(18,18,W-36,H-36,'S');
-  pdf.setLineWidth(1);
-  pdf.rect(28,28,W-56,H-56,'S');
-  [[36,36],[W-36,36],[36,H-36],[W-36,H-36]].forEach(([x,y])=>{
-    pdf.setFillColor(180,140,55);
-    pdf.circle(x,y,5,'F');
-    pdf.setLineWidth(0.5);
-    pdf.circle(x,y,9,'S');
-  });
-}
-
-/* ── PDF Content (per student with their own data) ── */
-function drawContent(pdf,W,H,st){
-  const cx=W/2;
-
-  // Title
-  pdf.setFont('helvetica','bold');
-  pdf.setFontSize(28);
-  pdf.setTextColor(212,168,67);
-  pdf.text(st.title||'Certificate of Completion',cx,H*0.25,{align:'center'});
-
-  // rule
-  const tW=pdf.getTextWidth(st.title||'Certificate of Completion');
-  pdf.setDrawColor(212,168,67);
-  pdf.setLineWidth(0.8);
-  pdf.line(cx-tW/2,H*0.275,cx+tW/2,H*0.275);
-
-  // "This is to certify that"
-  pdf.setFont('helvetica','normalitalic');
-  pdf.setFontSize(13);
-  pdf.setTextColor(190,175,140);
-  pdf.text('This is to certify that',cx,H*0.375,{align:'center'});
-
-  // Student name
-  pdf.setFont('helvetica','bolditalic');
-  pdf.setFontSize(42);
-  pdf.setTextColor(255,250,235);
-  pdf.text(st.name,cx,H*0.505,{align:'center'});
-
-  // underline
-  const nW=pdf.getTextWidth(st.name);
-  pdf.setDrawColor(212,168,67);
-  pdf.setLineWidth(1.5);
-  pdf.line(cx-nW/2,H*0.525,cx+nW/2,H*0.525);
-
-  // has successfully completed
-  pdf.setFont('helvetica','normal');
-  pdf.setFontSize(13);
-  pdf.setTextColor(180,165,130);
-  pdf.text('has successfully completed the course',cx,H*0.60,{align:'center'});
-
-  // Course name
-  pdf.setFont('helvetica','bold');
-  pdf.setFontSize(20);
-  pdf.setTextColor(240,200,100);
-  pdf.text(st.course||'',cx,H*0.675,{align:'center'});
-
-  // Period
-  if(st.start||st.end){
-    const period=[st.start,st.end].filter(Boolean).join(' – ');
-    pdf.setFont('helvetica','normal');
-    pdf.setFontSize(11);
-    pdf.setTextColor(150,135,100);
-    pdf.text(period,cx,H*0.76,{align:'center'});
-  }
-
-  // footer
-  pdf.setFont('helvetica','normal');
-  pdf.setFontSize(9);
-  pdf.setTextColor(90,80,55);
-  pdf.text('Issued with excellence · CertGen Studio',cx,H*0.875,{align:'center'});
-}
-
-/* ── Sample Excel Download ── */
-function downloadSample(){
+/* ══════════════════════════════════════════════
+   SAMPLE EXCEL
+══════════════════════════════════════════════ */
+function dlSample(){
   const ws=XLSX.utils.aoa_to_sheet([
-    ['Student Name','Course Name','Title Name','Start Date','End Date'],
-    ['Alice Johnson','Full Stack Development','Certificate of Completion','01-Jan-2025','30-Jun-2025'],
-    ['Bob Williams','Data Science Fundamentals','Certificate of Achievement','15-Feb-2025','15-Aug-2025'],
-    ['Carol Smith','UI/UX Design','Certificate of Proficiency','01-Mar-2025','01-Sep-2025'],
+    ['Student Name','Course Name','Start Date','End Date'],
+    ['Nujuma Nazar','AI Integrated Digital Marketing','21-03-2024','20-06-2024'],
+    ['Abhinav Sunil','AI Integrated Digital Marketing','02-01-2026','30-04-2026'],
+    ['Priya Sharma','Full Stack Web Development','01-Jun-2025','30-Sep-2025'],
   ]);
-  ws['!cols']=[{wch:22},{wch:28},{wch:28},{wch:14},{wch:14}];
+  ws['!cols']=[{wch:20},{wch:36},{wch:14},{wch:14}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Students');
-  XLSX.writeFile(wb,'certgen_sample_template.xlsx');
-  toast('Sample Excel downloaded','inf');
+  XLSX.writeFile(wb,'certgen_students.xlsx');
+  toast('Sample downloaded','inf');
 }
 
-/* ── Utilities ── */
+/* ══════════════════════════════════════════════
+   STEP INDICATOR
+══════════════════════════════════════════════ */
+function setStep(n){
+  for(let i=1;i<=3;i++){
+    const p=document.getElementById('sp'+i);
+    p.className='step-pill'+(i<n?' done':i===n?' active':'');
+  }
+}
+
+/* ══════════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════════ */
+function hex2rgb(hex){
+  return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)];
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function dlBlob(blob,name){
@@ -565,24 +992,25 @@ function dlBlob(blob,name){
   const a=Object.assign(document.createElement('a'),{href:url,download:name});
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
-function showOverlay(c,t,msg){document.getElementById('overlay').classList.add('show');setProgress(c,t,msg);}
-function setProgress(c,t,msg){
+
+function showOverlay(c,t,m){document.getElementById('overlay').classList.add('show');setProgress(c,t,m);}
+function setProgress(c,t,m){
   document.getElementById('pbarFill').style.width=t?`${Math.round(c/t*100)}%`:'0%';
-  document.getElementById('pbarLabel').textContent=`${c} / ${t}`;
-  document.getElementById('modalSub').textContent=msg;
+  document.getElementById('pbarLbl').textContent=`${c} / ${t}`;
+  document.getElementById('modalSub').textContent=m;
 }
 function hideOverlay(){document.getElementById('overlay').classList.remove('show');}
 
-let toastTimer;
+let tTimer;
 function toast(msg,type='inf'){
   const el=document.getElementById('toast');
   el.className=`toast ${type} show`;
   el.innerHTML=`<span>${msg}</span>`;
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>el.classList.remove('show'),4500);
+  clearTimeout(tTimer);
+  tTimer=setTimeout(()=>el.classList.remove('show'),4500);
 }
 
-/* drag-and-drop */
+/* drag-drop zones */
 [['tplZone',ev=>loadTemplate({target:{files:[ev.dataTransfer.files[0]]}})],
  ['xlsZone',ev=>loadExcel({target:{files:[ev.dataTransfer.files[0]]}})]].forEach(([id,fn])=>{
   const z=document.getElementById(id);
@@ -590,6 +1018,8 @@ function toast(msg,type='inf'){
   z.addEventListener('dragleave',()=>z.classList.remove('over'));
   z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');fn(e);});
 });
+
+window.addEventListener('resize',()=>{if(templateImg) fitZoom();});
 </script>
 </body>
 </html>
