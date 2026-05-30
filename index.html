@@ -243,13 +243,15 @@ td:first-child{text-align:center;}
           <input type="file" id="xlsFile" accept=".xlsx,.xls,.csv" onchange="loadExcel(event)">
           <span class="dz-ico">📊</span>
           <div class="dz-ttl">Upload Excel / CSV</div>
-          <div class="dz-hint">Required columns:</div>
+          <div class="dz-hint">Supported columns:</div>
         </div>
         <div class="col-grid">
           <div class="ccol"><span class="d"></span><b>Student Name</b></div>
           <div class="ccol"><span class="d"></span><b>Course Name</b></div>
           <div class="ccol"><span class="d"></span><b>Start Date</b></div>
           <div class="ccol"><span class="d"></span><b>End Date</b></div>
+          <div class="ccol"><span class="d"></span><b>Certificate No</b></div>
+          <div class="ccol"><span class="d"></span><b>Current Date</b></div>
         </div>
         <div id="xlsStatus"></div>
       </div>
@@ -360,24 +362,43 @@ const FIELDS = {
   studentName: {
     id:'studentName', label:'Student Name', sample:'NUJUMA NAZAR',
     color:'#000000', size:24, bold:true, italic:false, align:'center',
-    xPct:50, yPct:32, enabled:true, dot:'#000000'
+    xPct:50, yPct:32, enabled:true, dot:'#e05555'
   },
   courseName: {
     id:'courseName', label:'Course Name', sample:'AI Integrated Digital Marketing',
     color:'#000000', size:16, bold:true, italic:false, align:'center',
-    xPct:50, yPct:50, enabled:true, dot:'#000000'
+    xPct:50, yPct:50, enabled:true, dot:'#5588ee'
   },
   startDate: {
     id:'startDate', label:'Start Date', sample:'21-03-2024',
     color:'#000000', size:12, bold:false, italic:false, align:'center',
-    xPct:50, yPct:65, enabled:true, dot:'#000000'
+    xPct:50, yPct:65, enabled:true, dot:'#4caf7d'
   },
   endDate: {
     id:'endDate', label:'End Date', sample:'20-06-2024',
     color:'#000000', size:12, bold:false, italic:false, align:'center',
-    xPct:50, yPct:73, enabled:true, dot:'#000000'
+    xPct:50, yPct:73, enabled:true, dot:'#7a78a2'
+  },
+  certNo: {
+    id:'certNo', label:'Certificate No', sample:'CG-2026-0001',
+    color:'#000000', size:12, bold:false, italic:false, align:'center',
+    xPct:50, yPct:80, enabled:true, dot:'#e05555'
+  },
+  currentDate: {
+    id:'currentDate', label:'Current Date', sample:'30-05-2026',
+    color:'#000000', size:12, bold:false, italic:false, align:'center',
+    xPct:50, yPct:86, enabled:true, dot:'#5588ee'
   },
 };
+
+/* Helper: Get today's date formatted as DD-MM-YYYY */
+function getTodayDateStr() {
+  const d = new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
 
 /* ══════════════════════════════════════════════
    LEFT PANEL TABS
@@ -720,6 +741,8 @@ const CMAP={
   coursename:['coursename','course','programname','program'],
   startdate:['startdate','start','from','datefrom'],
   enddate:['enddate','end','to','dateto','finishdate'],
+  certno:['certificateno','certno','certificatenumber','certnumber','slno','id'],
+  currentdate:['currentdate','date','issuedate','today','todaydate'],
 };
 function findC(h,k){const n=h.map(norm);for(const a of CMAP[k]){const i=n.indexOf(a);if(i>=0)return i;}return -1;}
 
@@ -734,7 +757,8 @@ function loadExcel(e){
       if(rows.length<2){toast('File empty','err');return;}
       const h=rows[0];
       const sn=findC(h,'studentname'),cn=findC(h,'coursename'),
-            sd=findC(h,'startdate'),ed=findC(h,'enddate');
+            sd=findC(h,'startdate'),ed=findC(h,'enddate'),
+            cno=findC(h,'certno'),cd=findC(h,'currentdate');
       const miss=[];
       if(sn<0)miss.push('Student Name');if(cn<0)miss.push('Course Name');
       if(sd<0)miss.push('Start Date');if(ed<0)miss.push('End Date');
@@ -751,11 +775,16 @@ function loadExcel(e){
         const row=rows[i];
         const name=String(row[sn]||'').trim();
         if(!name){sk++;continue;}
+        const calculatedCertNo = cno>=0 && row[cno] ? String(row[cno]).trim() : `CG-2026-${String(uid + 1).padStart(4, '0')}`;
+        const calculatedCurrentDate = cd>=0 && row[cd] ? String(row[cd]).trim() : getTodayDateStr();
+        uid++;
         students.push({
-          id:++uid,name,
+          id:uid,name,
           course:String(row[cn]||'').trim(),
           start:String(row[sd]||'').trim(),
           end:String(row[ed]||'').trim(),
+          certNo:calculatedCertNo,
+          currentDate:calculatedCurrentDate,
           sel:false
         });
       }
@@ -804,7 +833,7 @@ class="chk"
 ${st.sel?'checked':''}
 onclick="event.stopPropagation()"
 onchange="chkStu(${st.id},this)"></td>
-      <td class="nm">${esc(st.name)}</td>
+      <td class="nm">${esc(st.name)}<br><span style="font-size:10px;color:var(--mut);font-weight:400;">${esc(st.certNo)}</span></td>
       <td class="dm">${esc(st.course)}</td>
     </tr>`).join('');
 
@@ -812,7 +841,7 @@ onchange="chkStu(${st.id},this)"></td>
     `<div class="tbl-wrap"><table>
       <thead><tr>
         <th><input type="checkbox" class="chk" id="chkAll" onchange="toggleAllChk(this)"></th>
-        <th>Name</th><th>Course</th>
+        <th>Name &amp; Cert No</th><th>Course</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
@@ -823,7 +852,7 @@ onchange="chkStu(${st.id},this)"></td>
       <input type="checkbox" class="chk" ${st.sel?'checked':''} onchange="chkStu(${st.id},this)">
       <div>
         <div style="font-size:12px;font-weight:600;">${esc(st.name)}</div>
-        <div style="font-size:10px;color:var(--mut)">${esc(st.course)}</div>
+        <div style="font-size:10px;color:var(--mut)">${esc(st.course)} · ${esc(st.certNo)}</div>
       </div>
     </div>`).join('');
   document.getElementById('stuList').innerHTML=miniRows;
@@ -891,6 +920,8 @@ async function generate(){
         courseName:  st.course,
         startDate:   st.start,
         endDate:     st.end,
+        certNo:      st.certNo,
+        currentDate: st.currentDate,
       };
 
      Object.values(FIELDS).forEach(f => {
@@ -957,12 +988,12 @@ async function generate(){
 ══════════════════════════════════════════════ */
 function dlSample(){
   const ws=XLSX.utils.aoa_to_sheet([
-    ['Student Name','Course Name','Start Date','End Date'],
-    ['Nujuma Nazar','AI Integrated Digital Marketing','21-03-2024','20-06-2024'],
-    ['Abhinav Sunil','AI Integrated Digital Marketing','02-01-2026','30-04-2026'],
-    ['Priya Sharma','Full Stack Web Development','01-Jun-2025','30-Sep-2025'],
+    ['Student Name','Course Name','Start Date','End Date','Certificate No','Current Date'],
+    ['Nujuma Nazar','AI Integrated Digital Marketing','21-03-2024','20-06-2024','CG-2024-0001','20-06-2024'],
+    ['Abhinav Sunil','AI Integrated Digital Marketing','02-01-2026','30-04-2026','CG-2026-0002','30-04-2026'],
+    ['Priya Sharma','Full Stack Web Development','01-Jun-2025','30-Sep-2025','CG-2025-0003','30-Sep-2025'],
   ]);
-  ws['!cols']=[{wch:20},{wch:36},{wch:14},{wch:14}];
+  ws['!cols']=[{wch:20},{wch:36},{wch:14},{wch:14},{wch:16},{wch:14}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Students');
   XLSX.writeFile(wb,'certgen_students.xlsx');
@@ -991,6 +1022,20 @@ function dlBlob(blob,name){
   const url=URL.createObjectURL(blob);
   const a=Object.assign(document.createElement('a'),{href:url,download:name});
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+// Global update fields for drag values from sliders
+function updateFieldsPanelValues(){
+  Object.values(FIELDS).forEach(f=>{
+    const sy=document.getElementById('rv-y-'+f.id);
+    const sx=document.getElementById('rv-x-'+f.id);
+    if(sy) sy.textContent=f.yPct.toFixed(1)+'%';
+    if(sx) sx.textContent=f.xPct.toFixed(1)+'%';
+    const sly=document.getElementById('sl-y-'+f.id);
+    const slx=document.getElementById('sl-x-'+f.id);
+    if(sly) sly.value=f.yPct.toFixed(1);
+    if(slx) slx.value=f.xPct.toFixed(1);
+  });
 }
 
 function showOverlay(c,t,m){document.getElementById('overlay').classList.add('show');setProgress(c,t,m);}
